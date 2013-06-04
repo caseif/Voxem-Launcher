@@ -28,6 +28,17 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+/**
+ * 
+ * @author Maxim Roncacé
+ * 
+ * THIS SOFTWARE IS LICENSED UNDER THE GNU GENERAL PUBLIC LICENSE VERSION 3, AND AS SUCH,
+ * ALL DERIVATIVES MUST BE RELEASED UNDER THE SAME LICENSE. THE FULL LICENSE TEXT MAY BE
+ * VIEWED IN THE FILE ENTITLED "LICENSE" IN THE ROOT DIRECTORY OF THIS JAR. THIS FILE MUST
+ * BE INCLUDED IN ALL DERIVATIVES OF THIS SOFTWARE.
+ *
+ */
+
 public class Launcher extends JPanel implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
