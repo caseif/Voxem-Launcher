@@ -1,5 +1,3 @@
-package mineflat;
-
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -41,6 +39,15 @@ import javax.swing.JPanel;
 
 public class Launcher extends JPanel implements ActionListener {
 
+	public static final String NAME = "MineFlat"; // the name of the program to be launched (used only in GUI)
+	public static final String JAR_NAME = "mineflat"; // the name of the program's main jarfile in the application data directory
+	public static final String FOLDER_NAME = "MineFlat"; // the name of the program's folder in the application data directory
+	public static final String LWJGL_LOCATION = "http://downloads.sourceforge.net/project/java-game-lib/Official%20Releases/LWJGL%202.8.5/lwjgl-2.8.5.zip"; // the location to download the LWJGL ZIP from
+	public static final String LWJGL_PATH = "lwjgl-2.8.5"; // the path in the LWJGL ZIP containing the "jar" directory (which in turn contains the jarfiles)
+	public static final String SLICK_LOCATION = "http://amigocraft.net/slick/slick.jar";
+	public static final String JAR_LOCATION = "http://amigocraft.net/mineflat/mineflat.jar"; // the location to download the program's main JAR from
+	public static final String VERSION_FILE_LOCATION = "http://amigocraft.net/mineflat/version"; // the location to download the online version file from (used in updating)
+	
 	private static final long serialVersionUID = 1L;
 
 	public static JFrame f;
@@ -100,11 +107,11 @@ public class Launcher extends JPanel implements ActionListener {
 			this.remove(play);
 			this.remove(force);
 			this.remove(quit);
-			File dir = new File(appData(), "MineFlat");
+			File dir = new File(appData(), FOLDER_NAME);
 			dir.mkdir();
 			File bin = new File (dir, "bin");
 			bin.mkdir();
-			File main = new File(bin, "mineflat.jar");
+			File main = new File(bin, JAR_NAME);
 			File lwjgl = new File(bin, "lwjgl.jar");
 			File lwjgl_util = new File(bin, "lwjgl_util.jar");
 			File jinput = new File(bin, "jinput.jar");
@@ -124,7 +131,7 @@ public class Launcher extends JPanel implements ActionListener {
 					paintImmediately(0, 0, width, height);
 					try {
 						Downloader dl = new Downloader(new URL(
-								"http://downloads.sourceforge.net/project/java-game-lib/Official%20Releases/LWJGL%202.8.5/lwjgl-2.8.5.zip"),
+								LWJGL_LOCATION),
 								lwjglZip.getPath());
 						Thread t = new Thread(dl);
 						t.start();
@@ -147,25 +154,25 @@ public class Launcher extends JPanel implements ActionListener {
 					Enumeration en = zip.entries();
 					while (en.hasMoreElements()){
 						ZipEntry entry = (ZipEntry)en.nextElement();
-						if (entry.getName().equals("lwjgl-2.8.5/jar/lwjgl.jar") && (!lwjgl.exists() || update)){
+						if (entry.getName().equals(LWJGL_PATH + File.separator + "jar" + File.separator + "lwjgl.jar") && (!lwjgl.exists() || update)){
 							progress = "Extracting LWJGL";
 							paintImmediately(0, 0, width, height);
 							unzip(zip, entry, lwjgl);
 						}
-						else if (entry.getName().equals("lwjgl-2.8.5/jar/lwjgl_util.jar") && (!lwjgl_util.exists() || update)){
+						else if (entry.getName().equals(LWJGL_PATH + File.separator + "jar" + File.separator + "lwjgl_util.jar") && (!lwjgl_util.exists() || update)){
 							progress = "Extracting LWJGL Util";
 							paintImmediately(0, 0, width, height);
 							unzip(zip, entry, lwjgl_util);
 						}
-						else if (entry.getName().equals("lwjgl-2.8.5/jar/jinput.jar") && (!jinput.exists() || update)){
+						else if (entry.getName().equals(LWJGL_PATH + File.separator + "jar" + File.separator + "jinput.jar") && (!jinput.exists() || update)){
 							progress = "Extracting JInput";
 							paintImmediately(0, 0, width, height);
 							unzip(zip, entry, jinput);
 						}
-						else if (entry.getName().startsWith("lwjgl-2.8.5/native/" + os) && !entry.isDirectory()){
+						else if (entry.getName().startsWith(LWJGL_PATH + File.separator + "/native/" + os) && !entry.isDirectory()){
 							progress = "Extracting natives";
 							paintImmediately(0, 0, width, height);
-							unzip(zip, entry, new File(nativeDir, entry.getName().replace("lwjgl-2.8.5/native/" + os, "")));
+							unzip(zip, entry, new File(nativeDir, entry.getName().replace(LWJGL_PATH + File.separator + "/native/" + os, "")));
 						}
 					}
 					zip.close();
@@ -185,7 +192,7 @@ public class Launcher extends JPanel implements ActionListener {
 				paintImmediately(0, 0, width, height);
 				try {
 					slick.createNewFile();
-					Downloader dl = new Downloader(new URL("http://www.amigocraft.net/slick/slick.jar"), slick.getPath());
+					Downloader dl = new Downloader(new URL(SLICK_LOCATION), slick.getPath());
 					Thread t = new Thread(dl);
 					t.start();
 					t.join();
@@ -199,12 +206,12 @@ public class Launcher extends JPanel implements ActionListener {
 			}
 
 			if (!main.exists() || update){
-				progress = "Downloading mineflat.jar";
+				progress = "Downloading " + JAR_NAME;
 				paintImmediately(0, 0, width, height);
 				try {
 					createVersionFile();
 					Downloader dl = new Downloader(new URL(
-							"http://www.amigocraft.net/mineflat/mineflat.jar"),
+							JAR_LOCATION),
 							main.getPath());
 					Thread t = new Thread(dl);
 					t.start();
@@ -212,18 +219,18 @@ public class Launcher extends JPanel implements ActionListener {
 				}
 				catch (Exception ex){
 					ex.printStackTrace();
-					progress = "Failed to download mineflat.jar";
+					progress = "Failed to download " + JAR_NAME;
 					fail = "Errors occurred; see console for details";
 					repaint();
 				}
 			}
 			
-			File versionFile = new File(appData(), "MineFlat");
+			File versionFile = new File(appData(), FOLDER_NAME);
 			versionFile = new File(versionFile, "version");
 			try {
 				if (versionFile.exists()){
 					BufferedReader currentVersionReader = new BufferedReader(new InputStreamReader(new FileInputStream(versionFile)));
-					BufferedReader latestVersionReader = new BufferedReader(new InputStreamReader(new URL("http://www.amigocraft.net/mineflat/version").openStream()));
+					BufferedReader latestVersionReader = new BufferedReader(new InputStreamReader(new URL(VERSION_FILE_LOCATION).openStream()));
 					String currentStage = "";
 					String currentVersion = "";
 					String latestStage = "";
@@ -329,9 +336,9 @@ public class Launcher extends JPanel implements ActionListener {
 			remove(updateNo);
 			paintImmediately(0, 0, width, height);
 
-			File nativeDir = new File(appData(), "MineFlat");
+			File nativeDir = new File(appData(), FOLDER_NAME);
 			nativeDir = new File(nativeDir, "bin");
-			File main = new File(nativeDir, "mineflat.jar");
+			File main = new File(nativeDir, JAR_NAME);
 			nativeDir = new File(nativeDir, "natives");
 			String os = "";
 			if (System.getProperty("os.name").toUpperCase().contains("WIN"))
@@ -342,11 +349,11 @@ public class Launcher extends JPanel implements ActionListener {
 				os = "linux";
 			nativeDir = new File(nativeDir, os);
 
-			progress = "Downloading mineflat.jar";
+			progress = "Downloading " + JAR_NAME;
 			paintImmediately(0, 0, width, height);
 			try {
 				Downloader dl = new Downloader(new URL(
-						"http://www.amigocraft.net/mineflat/mineflat.jar"),
+						JAR_LOCATION),
 						main.getPath());
 				Thread t = new Thread(dl);
 				t.start();
@@ -415,7 +422,7 @@ public class Launcher extends JPanel implements ActionListener {
 
 	private static void createAndShowGUI() {
 
-		f = new JFrame("MineFlat Launcher");
+		f = new JFrame(" Launcher");
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		Launcher l = new Launcher();
@@ -450,7 +457,7 @@ public class Launcher extends JPanel implements ActionListener {
 		}
 
 		else if (progress == null)
-			g.drawString("MineFlat Launcher", centerText(g, "MineFlat Launcher"), 50);
+			g.drawString(NAME + " Launcher", centerText(g, NAME + " Launcher"), 50);
 
 		else {
 			g.drawString(progress, centerText(g, progress), height / 2);
@@ -513,12 +520,12 @@ public class Launcher extends JPanel implements ActionListener {
 
 	private boolean createVersionFile(){
 		try {
-			File versionFile = new File(appData(), "MineFlat");
+			File versionFile = new File(appData(), FOLDER_NAME);
 			versionFile = new File(versionFile, "version");
 			if (versionFile.exists())
 				versionFile.delete();
 			versionFile.createNewFile();
-			BufferedReader latestVersionReader = new BufferedReader(new InputStreamReader(new URL("http://www.amigocraft.net/mineflat/version").openStream()));
+			BufferedReader latestVersionReader = new BufferedReader(new InputStreamReader(new URL(VERSION_FILE_LOCATION).openStream()));
 			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(versionFile)));
 			String line;
 			while ((line = latestVersionReader.readLine()) != null){
@@ -536,9 +543,9 @@ public class Launcher extends JPanel implements ActionListener {
 	}
 
 	private void launch(){
-		File nativeDir = new File(appData(), "MineFlat");
+		File nativeDir = new File(appData(), FOLDER_NAME);
 		nativeDir = new File(nativeDir, "bin");
-		File main = new File(nativeDir, "mineflat.jar");
+		File main = new File(nativeDir, JAR_NAME);
 		nativeDir = new File(nativeDir, "native");
 		String os = "";
 		if (System.getProperty("os.name").toUpperCase().contains("WIN"))
