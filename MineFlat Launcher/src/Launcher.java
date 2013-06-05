@@ -400,7 +400,7 @@ public class Launcher extends JPanel implements ActionListener {
 		}
 	}
 
-	private String getOutputStream(Process p){
+	private static String getOutputStream(Process p){
 
 		StringBuffer cmd_out = new StringBuffer("");
 		if (p != null){
@@ -420,7 +420,7 @@ public class Launcher extends JPanel implements ActionListener {
 		return cmd_out.toString();
 	}
 
-	private String getErrorStream(Process p){
+	private static String getErrorStream(Process p){
 
 		StringBuffer cmd_out = new StringBuffer("");
 		if (p != null){
@@ -525,15 +525,6 @@ public class Launcher extends JPanel implements ActionListener {
 		return System.getProperty("user.dir");
 	}
 
-	public static void slow (int n){
-		long t0, t1;
-		t0 = System.currentTimeMillis();
-		do {
-			t1 = System.currentTimeMillis();
-		}
-		while (t1 - t0 < n);
-	}
-
 	public void unzip(ZipFile zip, ZipEntry entry, File dest){
 		try {
 			BufferedInputStream bIs = new BufferedInputStream(zip.getInputStream(entry));
@@ -552,7 +543,7 @@ public class Launcher extends JPanel implements ActionListener {
 		}
 	}
 
-	private boolean createVersionFile(){
+	private static boolean createVersionFile(){
 		try {
 			File versionFile = new File(appData(), FOLDER_NAME);
 			versionFile = new File(versionFile, "version");
@@ -606,7 +597,7 @@ public class Launcher extends JPanel implements ActionListener {
 		}
 	}
 	
-	private int getFileSize(URL url){
+	public static int getFileSize(URL url){
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection)url.openConnection();

@@ -22,7 +22,7 @@ public class Downloader implements Runnable {
 			file.setWritable(true, false);
 			file.createNewFile();
 			FileOutputStream os = new FileOutputStream(fileName);
-			os.getChannel().transferFrom(rbc, 0, 1 << 24);
+			os.getChannel().transferFrom(rbc, 0, Launcher.getFileSize(url));
 			os.close();
 		}
 		catch (Exception ex){
