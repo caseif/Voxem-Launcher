@@ -40,7 +40,7 @@ import javax.swing.JPanel;
 public class Launcher extends JPanel implements ActionListener {
 
 	public static final String NAME = "MineFlat"; // the name of the program to be launched (used only in GUI)
-	public static final String JAR_NAME = "mineflat"; // the name of the program's main jarfile in the application data directory
+	public static final String JAR_NAME = "mineflat.jar"; // the name of the program's main jarfile in the application data directory
 	public static final String FOLDER_NAME = "MineFlat"; // the name of the program's folder in the application data directory
 	public static final String LWJGL_LOCATION = "http://downloads.sourceforge.net/project/java-game-lib/Official%20Releases/LWJGL%202.9.0/lwjgl-2.9.0.zip"; // the location to download the LWJGL ZIP from
 	public static final String LWJGL_PATH = "lwjgl-2.9.0"; // the path in the LWJGL ZIP containing the "jar" directory (which in turn contains the jarfiles)
