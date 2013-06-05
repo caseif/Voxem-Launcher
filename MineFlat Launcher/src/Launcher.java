@@ -1,3 +1,4 @@
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -15,6 +16,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
@@ -62,6 +65,8 @@ public class Launcher extends JPanel implements ActionListener {
 	boolean updateAvailable = false;
 	public static String progress = null;
 	public static String fail = null;
+	public static int eSize = -1;
+	public static int aSize = -1;
 	public static String updateMsg = null;
 
 	Font font = new Font("Verdana", Font.BOLD, 30);
@@ -133,9 +138,21 @@ public class Launcher extends JPanel implements ActionListener {
 						Downloader dl = new Downloader(new URL(
 								LWJGL_LOCATION),
 								lwjglZip.getPath());
+						eSize = getFileSize(new URL(LWJGL_LOCATION));
 						Thread t = new Thread(dl);
 						t.start();
-						t.join();
+						while (t.isAlive()){
+							aSize = (int)lwjglZip.length();
+							paintImmediately(0, 0, width, height);
+							repaint();
+						}
+						for (int i = 0; i <= 2; i++){
+							aSize = eSize;
+							paintImmediately(0, 0, width, height);
+							repaint();
+						}
+						aSize = -1;
+						eSize = -1;
 					}
 					catch (Exception ex){
 						ex.printStackTrace();
@@ -154,25 +171,25 @@ public class Launcher extends JPanel implements ActionListener {
 					Enumeration en = zip.entries();
 					while (en.hasMoreElements()){
 						ZipEntry entry = (ZipEntry)en.nextElement();
-						if (entry.getName().equals(LWJGL_PATH + File.separator + "jar" + File.separator + "lwjgl.jar") && (!lwjgl.exists() || update)){
+						if (entry.getName().equals(LWJGL_PATH + "/jar/" + "lwjgl.jar") && (!lwjgl.exists() || update)){
 							progress = "Extracting LWJGL";
 							paintImmediately(0, 0, width, height);
 							unzip(zip, entry, lwjgl);
 						}
-						else if (entry.getName().equals(LWJGL_PATH + File.separator + "jar" + File.separator + "lwjgl_util.jar") && (!lwjgl_util.exists() || update)){
+						else if (entry.getName().equals(LWJGL_PATH + "/jar/" + "lwjgl_util.jar") && (!lwjgl_util.exists() || update)){
 							progress = "Extracting LWJGL Util";
 							paintImmediately(0, 0, width, height);
 							unzip(zip, entry, lwjgl_util);
 						}
-						else if (entry.getName().equals(LWJGL_PATH + File.separator + "jar" + File.separator + "jinput.jar") && (!jinput.exists() || update)){
+						else if (entry.getName().equals(LWJGL_PATH + "/jar/" + "jinput.jar") && (!jinput.exists() || update)){
 							progress = "Extracting JInput";
 							paintImmediately(0, 0, width, height);
 							unzip(zip, entry, jinput);
 						}
-						else if (entry.getName().startsWith(LWJGL_PATH + File.separator + "/native/" + os) && !entry.isDirectory()){
+						else if (entry.getName().startsWith(LWJGL_PATH + "/native/" + os) && !entry.isDirectory()){
 							progress = "Extracting natives";
 							paintImmediately(0, 0, width, height);
-							unzip(zip, entry, new File(nativeDir, entry.getName().replace(LWJGL_PATH + File.separator + "/native/" + os, "")));
+							unzip(zip, entry, new File(nativeDir, entry.getName().replace(LWJGL_PATH + "/native/" + os, "")));
 						}
 					}
 					zip.close();
@@ -193,15 +210,29 @@ public class Launcher extends JPanel implements ActionListener {
 				try {
 					slick.createNewFile();
 					Downloader dl = new Downloader(new URL(SLICK_LOCATION), slick.getPath());
+					eSize = getFileSize(new URL(LWJGL_LOCATION));
+					aSize = 0;
 					Thread t = new Thread(dl);
 					t.start();
-					t.join();
+					while (t.isAlive()){
+						aSize = (int)slick.length();
+						repaint();
+						paintImmediately(0, 0, width, height);
+					}
+					for (int i = 0; i <= 2; i++){
+						aSize = eSize;
+						repaint();
+						paintImmediately(0, 0, width, height);
+					}
+					aSize = -1;
+					eSize = -1;
 				}
 				catch (Exception ex){
 					ex.printStackTrace();
 					progress = "Failed to download Slick";
 					fail = "Errors occurred; see console for details";
 					repaint();
+					paintImmediately(0, 0, width, height);
 				}
 			}
 
@@ -210,12 +241,7 @@ public class Launcher extends JPanel implements ActionListener {
 				paintImmediately(0, 0, width, height);
 				try {
 					createVersionFile();
-					Downloader dl = new Downloader(new URL(
-							JAR_LOCATION),
-							main.getPath());
-					Thread t = new Thread(dl);
-					t.start();
-					t.join();
+					downloadMain(main);
 				}
 				catch (Exception ex){
 					ex.printStackTrace();
@@ -352,12 +378,7 @@ public class Launcher extends JPanel implements ActionListener {
 			progress = "Downloading " + JAR_NAME;
 			paintImmediately(0, 0, width, height);
 			try {
-				Downloader dl = new Downloader(new URL(
-						JAR_LOCATION),
-						main.getPath());
-				Thread t = new Thread(dl);
-				t.start();
-				t.join();
+				downloadMain(main);
 
 				createVersionFile();
 
@@ -463,6 +484,19 @@ public class Launcher extends JPanel implements ActionListener {
 			g.drawString(progress, centerText(g, progress), height / 2);
 			if (fail != null)
 				g.drawString(fail, centerText(g, fail), height / 2 + 50);
+			if (aSize != -1 && eSize != -1){
+				String s = (int)((double)aSize / 1024) + "/" + (int)((double)eSize / 1024) + "kb";
+				g.drawString(s, centerText(g, s), height / 2 + 50);
+				int percent = (int)((double)aSize / (double)eSize * 100);
+				g.drawString(percent + "%", centerText(g, percent + "%"), height / 2 + 165);
+				int barWidth = 500;
+				int barHeight = 25;
+				g.setColor(Color.LIGHT_GRAY);
+				g.drawRect(width / 2 - barWidth / 2, height / 2 + 100, barWidth, barHeight);
+				g.setColor(Color.GREEN);
+				g.fillRect(width / 2 - barWidth / 2 + 1, height / 2 + 100 + 1,
+						(int)(((double)percent / 100) * (double)barWidth - 2), barHeight - 1);
+			}
 		}
 	}
 
@@ -570,5 +604,43 @@ public class Launcher extends JPanel implements ActionListener {
 			progress = "Failed to launch game";
 			fail = "Errors occurred; see console for details";
 		}
+	}
+	
+	private int getFileSize(URL url){
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection)url.openConnection();
+            conn.setRequestMethod("HEAD");
+            conn.getInputStream();
+            return conn.getContentLength();
+        }
+        catch (Exception e) {
+            return -1;
+        }
+        finally {
+            conn.disconnect();
+        }
+    }
+	
+	private void downloadMain(File main) throws MalformedURLException{
+		Downloader dl = new Downloader(new URL(
+				JAR_LOCATION),
+				main.getPath());
+		eSize = getFileSize(new URL(LWJGL_LOCATION));
+		aSize = 0;
+		Thread t = new Thread(dl);
+		t.start();
+		while (t.isAlive()){
+			aSize = (int)main.length();
+			repaint();
+			paintImmediately(0, 0, width, height);
+		}
+		for (int i = 0; i <= 2; i++){
+			aSize = eSize;
+			repaint();
+			paintImmediately(0, 0, width, height);
+		}
+		aSize = -1;
+		eSize = -1;
 	}
 }
