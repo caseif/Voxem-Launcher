@@ -411,47 +411,6 @@ public class Launcher extends JPanel implements ActionListener {
 		}
 	}
 
-	private static String getOutputStream(Process p){
-
-		StringBuffer cmd_out = new StringBuffer("");
-		if (p != null){
-			BufferedReader is = new BufferedReader(new InputStreamReader(p.getInputStream()));
-			String buf = "";
-			try {
-				while ((buf = is.readLine()) != null){
-					cmd_out.append(buf);
-					cmd_out.append (System.getProperty("line.separator"));
-				}
-				is.close();
-			}
-			catch (Exception ex){
-				ex.printStackTrace();
-			}
-		} 
-		return cmd_out.toString();
-	}
-
-	private static String getErrorStream(Process p){
-
-		StringBuffer cmd_out = new StringBuffer("");
-		if (p != null){
-			BufferedReader is = new BufferedReader(new InputStreamReader(p.getInputStream()));
-			String buf = "";
-			try {
-				is = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-				while ((buf = is.readLine()) != null){
-					cmd_out.append(buf);
-					cmd_out.append("\n");
-				}
-				is.close();
-			}
-			catch (Exception ex){
-				ex.printStackTrace();
-			}
-		} 
-		return cmd_out.toString();
-	}
-
 	private static void createAndShowGUI() {
 
 		f = new JFrame(" Launcher");
@@ -595,10 +554,7 @@ public class Launcher extends JPanel implements ActionListener {
 		progress = "Launching";
 		paintImmediately(0, 0, width, height);
 		try {
-			Process p = Runtime.getRuntime().exec(new String[]{"java", "-Djava.library.path=\"" + nativeDir + "\"", "-jar", main.getPath()});
-			System.out.println(getOutputStream(p));
-			System.err.println(getErrorStream(p));
-			p.waitFor();
+			Runtime.getRuntime().exec(new String[]{"java", "-Djava.library.path=\"" + nativeDir + "\"", "-jar", main.getPath()});
 			pullThePlug();
 		}
 		catch (Exception ex){
