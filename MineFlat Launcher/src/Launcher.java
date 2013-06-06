@@ -146,11 +146,6 @@ public class Launcher extends JPanel implements ActionListener {
 							paintImmediately(0, 0, width, height);
 							repaint();
 						}
-						for (int i = 0; i <= 2; i++){
-							aSize = eSize;
-							paintImmediately(0, 0, width, height);
-							repaint();
-						}
 						aSize = -1;
 						eSize = -1;
 					}
@@ -210,17 +205,12 @@ public class Launcher extends JPanel implements ActionListener {
 				try {
 					slick.createNewFile();
 					Downloader dl = new Downloader(new URL(SLICK_LOCATION), slick.getPath());
-					eSize = getFileSize(new URL(LWJGL_LOCATION));
+					eSize = getFileSize(new URL(SLICK_LOCATION));
 					aSize = 0;
 					Thread t = new Thread(dl);
 					t.start();
 					while (t.isAlive()){
 						aSize = (int)slick.length();
-						repaint();
-						paintImmediately(0, 0, width, height);
-					}
-					for (int i = 0; i <= 2; i++){
-						aSize = eSize;
 						repaint();
 						paintImmediately(0, 0, width, height);
 					}
@@ -617,7 +607,7 @@ public class Launcher extends JPanel implements ActionListener {
 		Downloader dl = new Downloader(new URL(
 				JAR_LOCATION),
 				main.getPath());
-		eSize = getFileSize(new URL(LWJGL_LOCATION));
+		eSize = getFileSize(new URL(JAR_LOCATION));
 		aSize = 0;
 		Thread t = new Thread(dl);
 		t.start();
