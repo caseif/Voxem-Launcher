@@ -19,7 +19,9 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -50,7 +52,7 @@ public class Launcher extends JPanel implements ActionListener {
 	public static final String SLICK_LOCATION = "http://amigocraft.net/slick/slick.jar";
 	public static final String JAR_LOCATION = "http://amigocraft.net/mineflat/mineflat.jar"; // the location to download the program's main JAR from
 	public static final String VERSION_FILE_LOCATION = "http://amigocraft.net/mineflat/version"; // the location to download the online version file from (used in updating)
-	
+
 	private static final long serialVersionUID = 1L;
 
 	public static JFrame f;
@@ -137,14 +139,13 @@ public class Launcher extends JPanel implements ActionListener {
 					try {
 						Downloader dl = new Downloader(new URL(
 								LWJGL_LOCATION),
-								lwjglZip.getPath());
+								lwjglZip.getPath(), "LWJGL");
 						eSize = getFileSize(new URL(LWJGL_LOCATION));
 						Thread t = new Thread(dl);
 						t.start();
 						while (t.isAlive()){
 							aSize = (int)lwjglZip.length();
 							paintImmediately(0, 0, width, height);
-							repaint();
 						}
 						aSize = -1;
 						eSize = -1;
@@ -156,182 +157,202 @@ public class Launcher extends JPanel implements ActionListener {
 						repaint();
 					}
 				}
-				if (!new File(bin, "native").exists())
-					new File(bin, "native").mkdir();
-				if (!nativeDir.exists())
-					nativeDir.mkdir();
-				try {
-					ZipFile zip = new ZipFile(new File(bin, "lwjgl.zip"));
-					@SuppressWarnings("rawtypes")
-					Enumeration en = zip.entries();
-					while (en.hasMoreElements()){
-						ZipEntry entry = (ZipEntry)en.nextElement();
-						if (entry.getName().equals(LWJGL_PATH + "/jar/" + "lwjgl.jar") && (!lwjgl.exists() || update)){
-							progress = "Extracting LWJGL";
-							paintImmediately(0, 0, width, height);
-							unzip(zip, entry, lwjgl);
-						}
-						else if (entry.getName().equals(LWJGL_PATH + "/jar/" + "lwjgl_util.jar") && (!lwjgl_util.exists() || update)){
-							progress = "Extracting LWJGL Util";
-							paintImmediately(0, 0, width, height);
-							unzip(zip, entry, lwjgl_util);
-						}
-						else if (entry.getName().equals(LWJGL_PATH + "/jar/" + "jinput.jar") && (!jinput.exists() || update)){
-							progress = "Extracting JInput";
-							paintImmediately(0, 0, width, height);
-							unzip(zip, entry, jinput);
-						}
-						else if (entry.getName().startsWith(LWJGL_PATH + "/native/" + os) && !entry.isDirectory()){
-							progress = "Extracting natives";
-							paintImmediately(0, 0, width, height);
-							unzip(zip, entry, new File(nativeDir, entry.getName().replace(LWJGL_PATH + "/native/" + os, "")));
-						}
-					}
-					zip.close();
-					lwjglZip.delete();
-				}
-				catch (Exception ex){
-					ex.printStackTrace();
-					progress = "Failed to extract LWJGL";
-					fail = "Errors occurred; see console for details";
-					repaint();
-				}
-			}
-
-			File slick = new File(bin, "slick.jar");
-			if (!slick.exists() || update){
-				progress = "Downloading Slick";
-				paintImmediately(0, 0, width, height);
-				try {
-					slick.createNewFile();
-					Downloader dl = new Downloader(new URL(SLICK_LOCATION), slick.getPath());
-					eSize = getFileSize(new URL(SLICK_LOCATION));
-					aSize = 0;
-					Thread t = new Thread(dl);
-					t.start();
-					while (t.isAlive()){
-						aSize = (int)slick.length();
-						repaint();
-						paintImmediately(0, 0, width, height);
-					}
-					aSize = -1;
-					eSize = -1;
-				}
-				catch (Exception ex){
-					ex.printStackTrace();
-					progress = "Failed to download Slick";
-					fail = "Errors occurred; see console for details";
-					repaint();
-					paintImmediately(0, 0, width, height);
-				}
-			}
-
-			if (!main.exists() || update){
-				progress = "Downloading " + JAR_NAME;
-				paintImmediately(0, 0, width, height);
-				try {
-					createVersionFile();
-					downloadMain(main);
-				}
-				catch (Exception ex){
-					ex.printStackTrace();
-					progress = "Failed to download " + JAR_NAME;
-					fail = "Errors occurred; see console for details";
-					repaint();
-				}
-			}
-			
-			File versionFile = new File(appData(), FOLDER_NAME);
-			versionFile = new File(versionFile, "version");
-			try {
-				if (versionFile.exists()){
-					BufferedReader currentVersionReader = new BufferedReader(new InputStreamReader(new FileInputStream(versionFile)));
-					BufferedReader latestVersionReader = new BufferedReader(new InputStreamReader(new URL(VERSION_FILE_LOCATION).openStream()));
-					String currentStage = "";
-					String currentVersion = "";
-					String latestStage = "";
-					String latestVersion = "";
-
-					String line;
-					while ((line = currentVersionReader.readLine()) != null){
-						if (line.startsWith("stage: ")){
-							currentStage = line.split(": ")[1];
-						}
-						else if (line.startsWith("version: ")){
-							currentVersion = line.split(": ")[1];
-						}
-					}
-					currentVersionReader.close();
-
-					while ((line = latestVersionReader.readLine()) != null){
-						if (line.startsWith("stage: ")){
-							latestStage = line.split(": ")[1];
-						}
-						else if (line.startsWith("version: ")){
-							latestVersion = line.split(": ")[1];
-						}
-					}
-					latestVersionReader.close();
-
-					boolean versionDifference = false;
-					String[] currentVersionArray = currentVersion.split("\\.");
-					String[] latestVersionArray = latestVersion.split("\\.");
-					if (currentVersionArray.length == latestVersionArray.length){
-						for (int i = 0; i < currentVersionArray.length; i++){
-							if (!currentVersionArray[i].equals(latestVersionArray[i])){
-								versionDifference = true;
-								break;
+				if (fail == null){
+					if (!new File(bin, "native").exists())
+						new File(bin, "native").mkdir();
+					if (!nativeDir.exists())
+						nativeDir.mkdir();
+					try {
+						ZipFile zip = new ZipFile(new File(bin, "lwjgl.zip"));
+						@SuppressWarnings("rawtypes")
+						Enumeration en = zip.entries();
+						List<String> extracted = new ArrayList<String>();
+						while (en.hasMoreElements()){
+							ZipEntry entry = (ZipEntry)en.nextElement();
+							if (entry.getName().equals(LWJGL_PATH + "/jar/" + "lwjgl.jar") && (!lwjgl.exists() || update)){
+								progress = "Extracting LWJGL";
+								paintImmediately(0, 0, width, height);
+								unzip(zip, entry, lwjgl);
+								extracted.add("lwjgl");
+							}
+							else if (entry.getName().equals(LWJGL_PATH + "/jar/" + "lwjgl_util.jar") && (!lwjgl_util.exists() || update)){
+								progress = "Extracting LWJGL Util";
+								paintImmediately(0, 0, width, height);
+								unzip(zip, entry, lwjgl_util);
+								extracted.add("util");
+							}
+							else if (entry.getName().equals(LWJGL_PATH + "/jar/" + "jinput.jar") && (!jinput.exists() || update)){
+								progress = "Extracting JInput";
+								paintImmediately(0, 0, width, height);
+								unzip(zip, entry, jinput);
+								extracted.add("jinput");
+							}
+							else if (entry.getName().startsWith(LWJGL_PATH + "/native/" + os) && !entry.isDirectory()){
+								progress = "Extracting natives";
+								paintImmediately(0, 0, width, height);
+								unzip(zip, entry, new File(nativeDir, entry.getName().replace(LWJGL_PATH + "/native/" + os, "")));
+								extracted.add("native");
 							}
 						}
+						if (!extracted.contains("lwjgl"))
+							fail = "Failed to extract lwjgl.jar from LWJGL ZIP";
+						else if (!extracted.contains("util"))
+							fail = "Failed to extract lwjgl_util.jar from LWJGL ZIP";
+						else if (!extracted.contains("jinput"))
+							fail = "Failed to extract jinput.jar from LWJGL ZIP";
+						else if (!extracted.contains("native"))
+							fail = "Failed to extract natives from LWJGL ZIP";
+						repaint();
+						zip.close();
+						lwjglZip.delete();
 					}
-					else
-						versionDifference = true;
+					catch (Exception ex){
+						ex.printStackTrace();
+						progress = "Failed to extract LWJGL";
+						fail = "Errors occurred; see console for details";
+						repaint();
+					}
+				}
+			}
 
-					if (!currentStage.equals(latestStage) || versionDifference){
+			if (fail == null){
+				File slick = new File(bin, "slick.jar");
+				if (!slick.exists() || update){
+					progress = "Downloading Slick";
+					paintImmediately(0, 0, width, height);
+					try {
+						slick.createNewFile();
+						Downloader dl = new Downloader(new URL(SLICK_LOCATION), slick.getPath(), "Slick");
+						eSize = getFileSize(new URL(SLICK_LOCATION));
+						aSize = 0;
+						Thread t = new Thread(dl);
+						t.start();
+						while (t.isAlive()){
+							aSize = (int)slick.length();
+							paintImmediately(0, 0, width, height);
+						}
+						aSize = -1;
+						eSize = -1;
+					}
+					catch (Exception ex){
+						ex.printStackTrace();
+						progress = "Failed to download Slick";
+						fail = "Errors occurred; see console for details";
+						paintImmediately(0, 0, width, height);
+					}
+				}
+
+				if (!main.exists() || update){
+					progress = "Downloading " + JAR_NAME;
+					paintImmediately(0, 0, width, height);
+					try {
+						createVersionFile();
+						downloadMain(main);
+					}
+					catch (Exception ex){
+						ex.printStackTrace();
+						progress = "Failed to download " + JAR_NAME;
+						fail = "Errors occurred; see console for details";
+						repaint();
+					}
+				}
+			}
+
+			if (fail == null){
+				File versionFile = new File(appData(), FOLDER_NAME);
+				versionFile = new File(versionFile, "version");
+				try {
+					if (versionFile.exists()){
+						BufferedReader currentVersionReader = new BufferedReader(new InputStreamReader(new FileInputStream(versionFile)));
+						BufferedReader latestVersionReader = new BufferedReader(new InputStreamReader(new URL(VERSION_FILE_LOCATION).openStream()));
+						String currentStage = "";
+						String currentVersion = "";
+						String latestStage = "";
+						String latestVersion = "";
+
+						String line;
+						while ((line = currentVersionReader.readLine()) != null){
+							if (line.startsWith("stage: ")){
+								currentStage = line.split(": ")[1];
+							}
+							else if (line.startsWith("version: ")){
+								currentVersion = line.split(": ")[1];
+							}
+						}
+						currentVersionReader.close();
+
+						while ((line = latestVersionReader.readLine()) != null){
+							if (line.startsWith("stage: ")){
+								latestStage = line.split(": ")[1];
+							}
+							else if (line.startsWith("version: ")){
+								latestVersion = line.split(": ")[1];
+							}
+						}
+						latestVersionReader.close();
+
+						boolean versionDifference = false;
+						String[] currentVersionArray = currentVersion.split("\\.");
+						String[] latestVersionArray = latestVersion.split("\\.");
+						if (currentVersionArray.length == latestVersionArray.length){
+							for (int i = 0; i < currentVersionArray.length; i++){
+								if (!currentVersionArray[i].equals(latestVersionArray[i])){
+									versionDifference = true;
+									break;
+								}
+							}
+						}
+						else
+							versionDifference = true;
+
+						if (!currentStage.equals(latestStage) || versionDifference){
+							updateAvailable = true;
+							updateMsg = "Would you like to update from version " + currentVersion + " " + currentStage + " to version " + latestVersion + " " + latestStage + "?";
+						}
+
+					}
+					else {
 						updateAvailable = true;
-						updateMsg = "Would you like to update from version " + currentVersion + " " + currentStage + " to version " + latestVersion + " " + latestStage + "?";
+						updateMsg = "No version file detected! Press \"Update\" to automatically begin an update.";
 					}
-
 				}
-				else {
-					updateAvailable = true;
-					updateMsg = "No version file detected! Press \"Update\" to automatically begin an update.";
+				catch (Exception ex){
+					ex.printStackTrace();
+					progress = "Failed to get latest version";
+					fail = "Errors occurred; see console for details";
+					repaint();
 				}
 			}
-			catch (Exception ex){
-				ex.printStackTrace();
-				progress = "Failed to get latest version";
-				fail = "Errors occurred; see console for details";
-				repaint();
-			}
 
-			if (main.exists() && !update && updateAvailable){
-				remove(play);
-				remove(force);
-				remove(quit);
-				updateYes = new JButton("Update");
-				updateYes.setVerticalTextPosition(AbstractButton.CENTER);
-				updateYes.setHorizontalTextPosition(AbstractButton.CENTER);
-				updateYes.setActionCommand("yesUpdate");
-				updateYes.addActionListener(this);
-				updateYes.setPreferredSize(new Dimension(btnWidth, btnHeight));
-				updateYes.setBounds((width / 2) - (btnWidth / 2), 200, btnWidth, btnHeight);
-				this.add(updateYes);
+			if (fail == null){
+				if (main.exists() && !update && updateAvailable){
+					remove(play);
+					remove(force);
+					remove(quit);
+					updateYes = new JButton("Update");
+					updateYes.setVerticalTextPosition(AbstractButton.CENTER);
+					updateYes.setHorizontalTextPosition(AbstractButton.CENTER);
+					updateYes.setActionCommand("yesUpdate");
+					updateYes.addActionListener(this);
+					updateYes.setPreferredSize(new Dimension(btnWidth, btnHeight));
+					updateYes.setBounds((width / 2) - (btnWidth / 2), 200, btnWidth, btnHeight);
+					this.add(updateYes);
 
-				updateNo = new JButton("Not Now");
-				updateNo.setVerticalTextPosition(AbstractButton.CENTER);
-				updateNo.setHorizontalTextPosition(AbstractButton.CENTER);
-				updateNo.setActionCommand("noUpdate");
-				updateNo.addActionListener(this);
-				updateNo.setPreferredSize(new Dimension(btnWidth, btnHeight));
-				updateNo.setBounds((width / 2) - (btnWidth / 2), 300, btnWidth, btnHeight);
-				this.add(updateNo);
+					updateNo = new JButton("Not Now");
+					updateNo.setVerticalTextPosition(AbstractButton.CENTER);
+					updateNo.setHorizontalTextPosition(AbstractButton.CENTER);
+					updateNo.setActionCommand("noUpdate");
+					updateNo.addActionListener(this);
+					updateNo.setPreferredSize(new Dimension(btnWidth, btnHeight));
+					updateNo.setBounds((width / 2) - (btnWidth / 2), 300, btnWidth, btnHeight);
+					this.add(updateNo);
 
-				this.paintImmediately(0, 0, width, height);
-			}
-			
-			if (!updateAvailable){
-				launch();
+					this.paintImmediately(0, 0, width, height);
+				}
+
+				if (!updateAvailable){
+					launch();
+				}
 			}
 		}
 
@@ -490,10 +511,10 @@ public class Launcher extends JPanel implements ActionListener {
 		}
 	}
 
-	private int centerText(Graphics g, String text){
+	private static int centerText(Graphics g, String text){
 		int stringLen = (int)
 				g.getFontMetrics().getStringBounds(text, g).getWidth();
-		return this.getWidth() / 2 - stringLen / 2;
+		return width / 2 - stringLen / 2;
 	}
 
 	private static void pullThePlug(){
@@ -515,7 +536,7 @@ public class Launcher extends JPanel implements ActionListener {
 		return System.getProperty("user.dir");
 	}
 
-	public void unzip(ZipFile zip, ZipEntry entry, File dest){
+	public static void unzip(ZipFile zip, ZipEntry entry, File dest){
 		try {
 			BufferedInputStream bIs = new BufferedInputStream(zip.getInputStream(entry));
 			int b;
@@ -586,39 +607,33 @@ public class Launcher extends JPanel implements ActionListener {
 			fail = "Errors occurred; see console for details";
 		}
 	}
-	
+
 	public static int getFileSize(URL url){
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection)url.openConnection();
-            conn.setRequestMethod("HEAD");
-            conn.getInputStream();
-            return conn.getContentLength();
-        }
-        catch (Exception e) {
-            return -1;
-        }
-        finally {
-            conn.disconnect();
-        }
-    }
-	
+		HttpURLConnection conn = null;
+		try {
+			conn = (HttpURLConnection)url.openConnection();
+			conn.setRequestMethod("HEAD");
+			conn.getInputStream();
+			return conn.getContentLength();
+		}
+		catch (Exception e) {
+			return -1;
+		}
+		finally {
+			conn.disconnect();
+		}
+	}
+
 	private void downloadMain(File main) throws MalformedURLException{
 		Downloader dl = new Downloader(new URL(
 				JAR_LOCATION),
-				main.getPath());
+				main.getPath(), JAR_NAME);
 		eSize = getFileSize(new URL(JAR_LOCATION));
 		aSize = 0;
 		Thread t = new Thread(dl);
 		t.start();
 		while (t.isAlive()){
 			aSize = (int)main.length();
-			repaint();
-			paintImmediately(0, 0, width, height);
-		}
-		for (int i = 0; i <= 2; i++){
-			aSize = eSize;
-			repaint();
 			paintImmediately(0, 0, width, height);
 		}
 		aSize = -1;

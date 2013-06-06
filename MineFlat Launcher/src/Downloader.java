@@ -8,10 +8,19 @@ public class Downloader implements Runnable {
 
 	private URL url;
 	private String fileName;
+	private String name;
 
-	public Downloader(URL url, String fileName){
+	/**
+	 * 
+	 * @param url The online URL of the file to download
+	 * @param fileName The local file to download into
+	 * @param name The name to be displayed in case of error
+	 */
+	
+	public Downloader(URL url, String fileName, String name){
 		this.url = url;
 		this.fileName = fileName;
+		this.name = name;
 	}
 
 	public void run(){
@@ -27,8 +36,9 @@ public class Downloader implements Runnable {
 		}
 		catch (Exception ex){
 			ex.printStackTrace();
-			Launcher.progress = "Failed to download " + fileName;
+			Launcher.progress = "Failed to download " + name;
 			Launcher.fail = "Errors occurred; see console for details";
+			new Launcher().repaint();
 		}
 	}
 }
