@@ -457,15 +457,16 @@ public class Launcher extends JPanel implements ActionListener {
 			if (aSize != -1 && eSize != -1){
 				String s = (int)((double)aSize / 1024) + "/" + (int)((double)eSize / 1024) + "kb";
 				g.drawString(s, centerText(g, s), height / 2 + 50);
-				int percent = (int)((double)aSize / (double)eSize * 100);
-				g.drawString(percent + "%", centerText(g, percent + "%"), height / 2 + 165);
 				int barWidth = 500;
-				int barHeight = 25;
+				int barHeight = 35;
 				g.setColor(Color.LIGHT_GRAY);
 				g.drawRect(width / 2 - barWidth / 2, height / 2 + 100, barWidth, barHeight);
 				g.setColor(Color.GREEN);
 				g.fillRect(width / 2 - barWidth / 2 + 1, height / 2 + 100 + 1,
 						(int)(((double)aSize / (double)eSize) * (double)barWidth - 2), barHeight - 1);
+				g.setColor(new Color(.2f, .2f, .2f));
+				int percent = (int)((double)aSize / (double)eSize * 100);
+				g.drawString(percent + "%", centerText(g, percent + "%"), height / 2 + 128);
 			}
 		}
 	}
