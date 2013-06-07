@@ -465,7 +465,7 @@ public class Launcher extends JPanel implements ActionListener {
 				g.drawRect(width / 2 - barWidth / 2, height / 2 + 100, barWidth, barHeight);
 				g.setColor(Color.GREEN);
 				g.fillRect(width / 2 - barWidth / 2 + 1, height / 2 + 100 + 1,
-						(int)(((double)percent / 100) * (double)barWidth - 2), barHeight - 1);
+						(int)(((double)aSize / (double)eSize) * (double)barWidth - 2), barHeight - 1);
 			}
 		}
 	}
