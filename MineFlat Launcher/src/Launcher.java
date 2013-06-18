@@ -37,21 +37,22 @@ import javax.swing.JPanel;
  * 
  * THIS SOFTWARE IS LICENSED UNDER THE GNU GENERAL PUBLIC LICENSE VERSION 3, AND AS SUCH,
  * ALL DERIVATIVES MUST BE RELEASED UNDER THE SAME LICENSE. THE FULL LICENSE TEXT MAY BE
- * VIEWED IN THE FILE ENTITLED "LICENSE" IN THE ROOT DIRECTORY OF THIS JAR. THIS FILE MUST
- * BE INCLUDED IN ALL DERIVATIVES OF THIS SOFTWARE.
+ * VIEWED IN THE FILE ENTITLED "LICENSE" IN THE ROOT DIRECTORY OF THIS JAR. THIS LICENSE
+ * FILE MUST BE INCLUDED IN ALL DERIVATIVES OF THIS SOFTWARE.
  *
  */
 
 public class Launcher extends JPanel implements ActionListener {
 
-	public static final String NAME = "MineFlat"; // the name of the program to be launched (used only in GUI)
-	public static final String JAR_NAME = "mineflat.jar"; // the name of the program's main jarfile in the application data directory
-	public static final String FOLDER_NAME = "MineFlat"; // the name of the program's folder in the application data directory
-	public static final String LWJGL_LOCATION = "http://downloads.sourceforge.net/project/java-game-lib/Official%20Releases/LWJGL%202.9.0/lwjgl-2.9.0.zip"; // the location to download the LWJGL ZIP from
-	public static final String LWJGL_PATH = "lwjgl-2.9.0"; // the path in the LWJGL ZIP containing the "jar" directory (which in turn contains the jarfiles)
-	public static final String SLICK_LOCATION = "http://amigocraft.net/slick/slick.jar";
-	public static final String JAR_LOCATION = "http://amigocraft.net/mineflat/mineflat.jar"; // the location to download the program's main JAR from
-	public static final String VERSION_FILE_LOCATION = "http://amigocraft.net/mineflat/version"; // the location to download the online version file from (used in updating)
+	public static final String 	NAME = "MineFlat"; // the name of the program to be launched (used only in GUI)
+	public static final String 	JAR_NAME = "mineflat.jar"; // the name of the program's main jarfile in the application data directory
+	public static final String 	FOLDER_NAME = "MineFlat"; // the name of the program's folder in the application data directory
+	public static final String 	LWJGL_LOCATION = "http://downloads.sourceforge.net/project/java-game-lib/Official%20Releases/LWJGL%202.9.0/lwjgl-2.9.0.zip"; // the location to download the LWJGL ZIP from
+	public static final String 	LWJGL_PATH = "lwjgl-2.9.0"; // the path in the LWJGL ZIP containing the "jar" directory (which in turn contains the jarfiles)
+	public static final String 	SLICK_LOCATION = "http://amigocraft.net/slick/slick.jar";
+	public static final String 	JAR_LOCATION = "http://amigocraft.net/mineflat/mineflat.jar"; // the location to download the program's main JAR from
+	public static final String 	VERSION_FILE_LOCATION = "http://amigocraft.net/mineflat/version"; // the location to download the online version file from (used in updating)
+	public static final int		SPEED_UPDATE_INTERVAL = 500; // the rate in milliseconds at which to update the download speed
 
 	private static final long serialVersionUID = 1L;
 
@@ -67,8 +68,11 @@ public class Launcher extends JPanel implements ActionListener {
 	boolean updateAvailable = false;
 	public static String progress = null;
 	public static String fail = null;
-	public static int eSize = -1;
-	public static int aSize = -1;
+	public static double eSize = -1;
+	public static double aSize = -1;
+	public static double lastTime = -1;
+	public static double lastSize = -1;
+	public static double speed = -1;
 	public static String updateMsg = null;
 
 	Font font = new Font("Verdana", Font.BOLD, 30);
@@ -144,9 +148,22 @@ public class Launcher extends JPanel implements ActionListener {
 						Thread t = new Thread(dl);
 						t.start();
 						while (t.isAlive()){
-							aSize = (int)lwjglZip.length();
+							aSize = lwjglZip.length();
+							if (lastTime != -1){
+								if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){
+									speed = ((aSize - lastSize) / 1000) / ((System.currentTimeMillis() - lastTime) / 1000);
+									lastTime = System.currentTimeMillis();
+									lastSize = aSize;
+								}
+							}
+							else {
+								speed = 0;
+								lastTime = System.currentTimeMillis();
+							}
 							paintImmediately(0, 0, width, height);
 						}
+						lastTime = -1;
+						speed = 0;
 						aSize = -1;
 						eSize = -1;
 					}
@@ -228,9 +245,22 @@ public class Launcher extends JPanel implements ActionListener {
 						Thread t = new Thread(dl);
 						t.start();
 						while (t.isAlive()){
-							aSize = (int)slick.length();
+							aSize = slick.length();
+							if (lastTime != -1){
+								if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){
+									speed = ((aSize - lastSize) / 1000) / ((System.currentTimeMillis() - lastTime) / 1000);
+									lastTime = System.currentTimeMillis();
+									lastSize = aSize;
+								}
+							}
+							else {
+								speed = 0;
+								lastTime = System.currentTimeMillis();
+							}
 							paintImmediately(0, 0, width, height);
 						}
+						lastTime = -1;
+						speed = 0;
 						aSize = -1;
 						eSize = -1;
 					}
@@ -455,8 +485,10 @@ public class Launcher extends JPanel implements ActionListener {
 			if (fail != null)
 				g.drawString(fail, centerText(g, fail), height / 2 + 50);
 			if (aSize != -1 && eSize != -1){
-				String s = (int)((double)aSize / 1024) + "/" + (int)((double)eSize / 1024) + "kb";
-				g.drawString(s, centerText(g, s), height / 2 + 50);
+				String s = (int)((double)aSize / 1024) + "/" + (int)((double)eSize / 1024) + " kb";
+				g.drawString(s, centerText(g, s), height / 2 + 40);
+				String sp = "@" + (int)speed + " kb/s";
+				g.drawString(sp, centerText(g, sp), height / 2 + 80);
 				int barWidth = 500;
 				int barHeight = 35;
 				g.setColor(Color.LIGHT_GRAY);
@@ -591,8 +623,21 @@ public class Launcher extends JPanel implements ActionListener {
 		t.start();
 		while (t.isAlive()){
 			aSize = (int)main.length();
+			if (lastTime != -1){
+				if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){
+					speed = ((aSize - lastSize) / 1000) / ((System.currentTimeMillis() - lastTime) / 1000);
+					lastTime = System.currentTimeMillis();
+					lastSize = aSize;
+				}
+			}
+			else {
+				speed = 0;
+				lastTime = System.currentTimeMillis();
+			}
 			paintImmediately(0, 0, width, height);
 		}
+		lastTime = -1;
+		speed = 0;
 		aSize = -1;
 		eSize = -1;
 	}
