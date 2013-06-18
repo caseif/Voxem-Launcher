@@ -163,6 +163,7 @@ public class Launcher extends JPanel implements ActionListener {
 							paintImmediately(0, 0, width, height);
 						}
 						lastTime = -1;
+						lastSize = 0;
 						speed = 0;
 						aSize = -1;
 						eSize = -1;
@@ -260,6 +261,7 @@ public class Launcher extends JPanel implements ActionListener {
 							paintImmediately(0, 0, width, height);
 						}
 						lastTime = -1;
+						lastSize = 0;
 						speed = 0;
 						aSize = -1;
 						eSize = -1;
@@ -637,6 +639,7 @@ public class Launcher extends JPanel implements ActionListener {
 			paintImmediately(0, 0, width, height);
 		}
 		lastTime = -1;
+		lastSize = 0;
 		speed = 0;
 		aSize = -1;
 		eSize = -1;
