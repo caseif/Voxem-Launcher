@@ -489,7 +489,9 @@ public class Launcher extends JPanel implements ActionListener {
 			if (aSize != -1 && eSize != -1){
 				String s = (int)((double)aSize / 1024) + "/" + (int)((double)eSize / 1024) + " kb";
 				g.drawString(s, centerText(g, s), height / 2 + 40);
-				String sp = "@" + (int)speed + " kb/s";
+				String sp = "@" + (int)(speed * 8) + " Kbps";
+				if (speed * 8 >= 1024)
+					sp = "@" + String.format("%.2f", (speed * 8 / 1024)) + " Mbps";
 				g.drawString(sp, centerText(g, sp), height / 2 + 80);
 				int barWidth = 500;
 				int barHeight = 35;
