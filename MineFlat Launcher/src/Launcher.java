@@ -353,6 +353,13 @@ public class Launcher extends JPanel implements ActionListener {
 					progress = "Failed to get latest version";
 					fail = "Errors occurred; see console for details";
 					repaint();
+					try {
+						Thread.sleep(2000L);
+					}
+					catch (Exception exc){
+						exc.printStackTrace();
+					}
+					launch();
 				}
 			}
 
