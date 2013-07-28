@@ -564,8 +564,9 @@ public class Launcher extends JPanel implements ActionListener {
 			return System.getenv("APPDATA");
 		else if (OS.contains("MAC"))
 			return System.getProperty("user.home") + "/Library/Application Support";
-		else if (OS.contains("NUX"))
-			return System.getProperty("user.home");
+		try {return new File(Launcher.class.getProtectionDomain()
+				.getCodeSource().getLocation().toURI().getPath()).getParent();}
+		catch (Exception ex){ex.printStackTrace();}
 		return System.getProperty("user.dir");
 	}
 
