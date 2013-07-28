@@ -463,6 +463,7 @@ public class Launcher extends JPanel implements ActionListener {
 		f.setVisible(true);
 		f.setSize(width, height);
 		f.setResizable(false);
+		f.setLocationRelativeTo(null);
 		try {
 			f.setIconImage(ImageIO.read(Launcher.class.getResourceAsStream("/images/icon.png")));
 		}
