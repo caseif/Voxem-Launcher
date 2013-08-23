@@ -21,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -57,17 +58,9 @@ public class Launcher extends JPanel implements ActionListener {
 	 */
 	public static final String 	FOLDER_NAME = "MineFlat";
 	/**
-	 * The location to download the LWJGL ZIP from
+	 * The location to download the LWJGL/Slick libraries from.
 	 */
-	public static final String 	LWJGL_LOCATION = "http://downloads.sourceforge.net/project/java-game-lib/Official%20Releases/LWJGL%202.9.0/lwjgl-2.9.0.zip";
-	/**
-	 * The path in the LWJGL ZIP containing the "jar" directory (which in turn contains the jarfiles)
-	 */
-	public static final String 	LWJGL_PATH = "lwjgl-2.9.0";
-	/**
-	 * The location to download the Slick library from.
-	 */
-	public static final String 	SLICK_LOCATION = "http://amigocraft.net/slick/slick.jar";
+	public static final String 	LIB_LOCATION = "http://slick.ninjacave.com/slick.zip";
 	/**
 	 * The location to download the program's main JAR from.
 	 * This can be replaced with a PHP script which serves the file in order to handle
@@ -88,6 +81,8 @@ public class Launcher extends JPanel implements ActionListener {
 	public static JFrame f;
 
 	protected JButton play, force, quit, updateYes, updateNo;
+	
+	public static HashMap<String, String> osExt = new HashMap<String, String>();
 
 	private int btnWidth = 200;
 	private int btnHeight = 50;
@@ -144,17 +139,24 @@ public class Launcher extends JPanel implements ActionListener {
 
 	public void actionPerformed(ActionEvent e){
 		if (e.getActionCommand().equals("play")){
+			osExt.put("windows", ".dll");
+			osExt.put("macosx", ".jnilib");
+			osExt.put("macosx2", ".dylib");
+			osExt.put("linux", ".so");
 			this.remove(play);
 			this.remove(force);
 			this.remove(quit);
 			File dir = new File(appData(), FOLDER_NAME);
 			dir.mkdir();
 			File bin = new File (dir, "bin");
+			if (update)
+				bin.delete();
 			bin.mkdir();
 			File main = new File(bin, JAR_NAME);
 			File lwjgl = new File(bin, "lwjgl.jar");
 			File lwjgl_util = new File(bin, "lwjgl_util.jar");
 			File jinput = new File(bin, "jinput.jar");
+			File slick = new File(bin, "slick.jar");
 			String os = "";
 			if (System.getProperty("os.name").toUpperCase().contains("WIN"))
 				os = "windows";
@@ -164,23 +166,25 @@ public class Launcher extends JPanel implements ActionListener {
 				os = "linux";
 			File nativeDir = new File(bin, "native");
 			nativeDir = new File(nativeDir, os);
-			if (!lwjgl.exists() || !lwjgl_util.exists() || !jinput.exists() || !nativeDir.exists() || update){
+			if (!lwjgl.exists() || !lwjgl_util.exists() || !jinput.exists() ||
+					!nativeDir.exists() || update){
 				File lwjglZip = new File(bin, "lwjgl.zip");
 				if (!lwjglZip.exists() || update){
-					progress = "Downloading LWJGL";
+					progress = "Downloading libraries";
 					paintImmediately(0, 0, width, height);
 					try {
 						Downloader dl = new Downloader(new URL(
-								LWJGL_LOCATION),
+								LIB_LOCATION),
 								lwjglZip.getPath(), "LWJGL");
-						eSize = getFileSize(new URL(LWJGL_LOCATION));
+						eSize = getFileSize(new URL(LIB_LOCATION));
 						Thread t = new Thread(dl);
 						t.start();
 						while (t.isAlive()){
 							aSize = lwjglZip.length();
 							if (lastTime != -1){
 								if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){
-									speed = ((aSize - lastSize) / 1000) / ((System.currentTimeMillis() - lastTime) / 1000);
+									speed = ((aSize - lastSize) / 1000) /
+											((System.currentTimeMillis() - lastTime) / 1000);
 									lastTime = System.currentTimeMillis();
 									lastSize = aSize;
 								}
@@ -199,7 +203,7 @@ public class Launcher extends JPanel implements ActionListener {
 					}
 					catch (Exception ex){
 						ex.printStackTrace();
-						progress = "Failed to download LWJGL";
+						progress = "Failed to download libraries";
 						fail = "Errors occurred; see console for details";
 						repaint();
 					}
@@ -216,116 +220,75 @@ public class Launcher extends JPanel implements ActionListener {
 						List<String> extracted = new ArrayList<String>();
 						while (en.hasMoreElements()){
 							ZipEntry entry = (ZipEntry)en.nextElement();
-							if (entry.getName().equals(LWJGL_PATH + "/jar/" + "lwjgl.jar") && (!lwjgl.exists() || update)){
+							if (entry.getName().equals("lib/lwjgl.jar") &&
+									(!lwjgl.exists() || update)){
 								progress = "Extracting LWJGL";
 								paintImmediately(0, 0, width, height);
 								unzip(zip, entry, lwjgl);
 								extracted.add("lwjgl");
 							}
-							else if (entry.getName().equals(LWJGL_PATH + "/jar/" + "lwjgl_util.jar") && (!lwjgl_util.exists() || update)){
+							else if (entry.getName().equals("lib/lwjgl_util.jar") &&
+									(!lwjgl_util.exists() || update)){
 								progress = "Extracting LWJGL Util";
 								paintImmediately(0, 0, width, height);
 								unzip(zip, entry, lwjgl_util);
 								extracted.add("util");
 							}
-							else if (entry.getName().equals(LWJGL_PATH + "/jar/" + "jinput.jar") && (!jinput.exists() || update)){
+							else if (entry.getName().equals("lib/jinput.jar") &&
+									(!jinput.exists() || update)){
 								progress = "Extracting JInput";
 								paintImmediately(0, 0, width, height);
 								unzip(zip, entry, jinput);
 								extracted.add("jinput");
 							}
-							else if (entry.getName().startsWith(LWJGL_PATH + "/native/" + os) && !entry.isDirectory()){
+							else if (entry.getName().equals("lib/slick.jar") &&
+									(!slick.exists() || update)){
+								progress = "Extracting Slick";
+								paintImmediately(0, 0, width, height);
+								unzip(zip, entry, jinput);
+								extracted.add("slick");
+							}
+							else if ((entry.getName().endsWith(osExt.get(os)) ||
+									(osExt.containsKey(osExt) &&
+											entry.getName().endsWith(osExt.get(os + "2")))) &&
+									!entry.isDirectory()){
 								progress = "Extracting natives";
 								paintImmediately(0, 0, width, height);
-								unzip(zip, entry, new File(nativeDir, entry.getName().replace(LWJGL_PATH + "/native/" + os, "")));
+								unzip(zip, entry, new File(nativeDir, entry.getName()));
 								extracted.add("native");
 							}
 						}
 						if (!extracted.contains("lwjgl"))
-							fail = "Failed to extract lwjgl.jar from LWJGL ZIP";
+							fail = "Failed to extract lwjgl.jar from library ZIP";
 						else if (!extracted.contains("util"))
-							fail = "Failed to extract lwjgl_util.jar from LWJGL ZIP";
+							fail = "Failed to extract lwjgl_util.jar from library ZIP";
 						else if (!extracted.contains("jinput"))
-							fail = "Failed to extract jinput.jar from LWJGL ZIP";
+							fail = "Failed to extract jinput.jar from library ZIP";
 						else if (!extracted.contains("native"))
-							fail = "Failed to extract natives from LWJGL ZIP";
+							fail = "Failed to extract natives from library ZIP";
+						else if (!extracted.contains("slick"))
+							fail = "Failed to extract slick.jar from library ZIP";
 						repaint();
 						zip.close();
 						lwjglZip.delete();
 					}
 					catch (Exception ex){
 						ex.printStackTrace();
-						progress = "Failed to extract LWJGL";
+						progress = "Failed to extract libraries";
 						fail = "Errors occurred; see console for details";
 						repaint();
 					}
 				}
 			}
-
-			if (fail == null){
-				File slick = new File(bin, "slick.jar");
-				if (!slick.exists() || update){
-					progress = "Downloading Slick";
-					paintImmediately(0, 0, width, height);
-					try {
-						slick.createNewFile();
-						Downloader dl = new Downloader(new URL(SLICK_LOCATION), slick.getPath(), "Slick");
-						eSize = getFileSize(new URL(SLICK_LOCATION));
-						aSize = 0;
-						Thread t = new Thread(dl);
-						t.start();
-						while (t.isAlive()){
-							aSize = slick.length();
-							if (lastTime != -1){
-								if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){
-									speed = ((aSize - lastSize) / 1000) / ((System.currentTimeMillis() - lastTime) / 1000);
-									lastTime = System.currentTimeMillis();
-									lastSize = aSize;
-								}
-							}
-							else {
-								speed = 0;
-								lastTime = System.currentTimeMillis();
-							}
-							paintImmediately(0, 0, width, height);
-						}
-						lastTime = -1;
-						lastSize = 0;
-						speed = 0;
-						aSize = -1;
-						eSize = -1;
-					}
-					catch (Exception ex){
-						ex.printStackTrace();
-						progress = "Failed to download Slick";
-						fail = "Errors occurred; see console for details";
-						paintImmediately(0, 0, width, height);
-					}
-				}
-
-				if (!main.exists() || update){
-					progress = "Downloading " + JAR_NAME;
-					paintImmediately(0, 0, width, height);
-					try {
-						createVersionFile();
-						downloadMain(main);
-					}
-					catch (Exception ex){
-						ex.printStackTrace();
-						progress = "Failed to download " + JAR_NAME;
-						fail = "Errors occurred; see console for details";
-						repaint();
-					}
-				}
-			}
-
 			if (fail == null){
 				File versionFile = new File(appData(), FOLDER_NAME);
 				versionFile = new File(versionFile, "version");
 				try {
 					if (versionFile.exists()){
-						BufferedReader currentVersionReader = new BufferedReader(new InputStreamReader(new FileInputStream(versionFile)));
-						BufferedReader latestVersionReader = new BufferedReader(new InputStreamReader(new URL(VERSION_FILE_LOCATION).openStream()));
+						BufferedReader currentVersionReader = new BufferedReader(
+								new InputStreamReader(new FileInputStream(versionFile)));
+						BufferedReader latestVersionReader = new BufferedReader(
+								new InputStreamReader(new URL(VERSION_FILE_LOCATION).openStream()));
 						String currentStage = "";
 						String currentVersion = "";
 						String latestStage = "";
@@ -368,13 +331,16 @@ public class Launcher extends JPanel implements ActionListener {
 
 						if (!currentStage.equals(latestStage) || versionDifference){
 							updateAvailable = true;
-							updateMsg = "Would you like to update from version " + currentVersion + " " + currentStage + " to version " + latestVersion + " " + latestStage + "?";
+							updateMsg = "Would you like to update from version " + currentVersion +
+									" " + currentStage + " to version " + latestVersion + " " +
+									latestStage + "?";
 						}
 
 					}
 					else {
 						updateAvailable = true;
-						updateMsg = "No version file detected! Press \"Update\" to automatically begin an update.";
+						updateMsg = "No version file detected! Press \"Update\" to " +
+						"automatically begin an update.";
 					}
 				}
 				catch (Exception ex){
@@ -536,7 +502,8 @@ public class Launcher extends JPanel implements ActionListener {
 				g.drawRect(width / 2 - barWidth / 2, height / 2 + 100, barWidth, barHeight);
 				g.setColor(Color.GREEN);
 				g.fillRect(width / 2 - barWidth / 2 + 1, height / 2 + 100 + 1,
-						(int)(((double)aSize / (double)eSize) * (double)barWidth - 2), barHeight - 1);
+						(int)(((double)aSize / (double)eSize) * (double)barWidth - 2),
+						barHeight - 1);
 				g.setColor(new Color(.2f, .2f, .2f));
 				int percent = (int)((double)aSize / (double)eSize * 100);
 				g.drawString(percent + "%", centerText(g, percent + "%"), height / 2 + 128);
@@ -595,8 +562,10 @@ public class Launcher extends JPanel implements ActionListener {
 			if (versionFile.exists())
 				versionFile.delete();
 			versionFile.createNewFile();
-			BufferedReader latestVersionReader = new BufferedReader(new InputStreamReader(new URL(VERSION_FILE_LOCATION).openStream()));
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(versionFile)));
+			BufferedReader latestVersionReader = new BufferedReader(new InputStreamReader(
+					new URL(VERSION_FILE_LOCATION).openStream()));
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+					versionFile)));
 			String line;
 			while ((line = latestVersionReader.readLine()) != null){
 				bw.append(line);
@@ -629,7 +598,8 @@ public class Launcher extends JPanel implements ActionListener {
 		progress = "Launching";
 		paintImmediately(0, 0, width, height);
 		try {
-			Runtime.getRuntime().exec(new String[]{"java", "-Djava.library.path=\"" + nativeDir + "\"", "-jar", main.getPath()});
+			Runtime.getRuntime().exec(new String[]{"java", "-Djava.library.path=\"" +
+			nativeDir + "\"", "-jar", main.getPath()});
 			pullThePlug();
 		}
 		catch (Exception ex){
@@ -656,6 +626,8 @@ public class Launcher extends JPanel implements ActionListener {
 	}
 
 	private void downloadMain(File main) throws MalformedURLException{
+		if (updateAvailable)
+			main.delete();
 		Downloader dl = new Downloader(new URL(
 				JAR_LOCATION),
 				main.getPath(), JAR_NAME);
@@ -667,7 +639,8 @@ public class Launcher extends JPanel implements ActionListener {
 			aSize = (int)main.length();
 			if (lastTime != -1){
 				if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){
-					speed = ((aSize - lastSize) / 1000) / ((System.currentTimeMillis() - lastTime) / 1000);
+					speed = ((aSize - lastSize) / 1000) / ((System.currentTimeMillis() - lastTime) /
+							1000);
 					lastTime = System.currentTimeMillis();
 					lastSize = aSize;
 				}
