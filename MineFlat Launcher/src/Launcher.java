@@ -81,7 +81,7 @@ public class Launcher extends JPanel implements ActionListener {
 	public static JFrame f;
 
 	protected JButton play, force, quit, updateYes, updateNo;
-	
+
 	public static HashMap<String, String> osExt = new HashMap<String, String>();
 
 	private int btnWidth = 200;
@@ -251,7 +251,7 @@ public class Launcher extends JPanel implements ActionListener {
 							else if ((entry.getName().endsWith(osExt.get(os)) ||
 									(osExt.containsKey(osExt) &&
 											entry.getName().endsWith(osExt.get(os + "2")))) &&
-									!entry.isDirectory()){
+											!entry.isDirectory()){
 								progress = "Extracting natives";
 								paintImmediately(0, 0, width, height);
 								unzip(zip, entry, new File(nativeDir, entry.getName()));
@@ -281,80 +281,95 @@ public class Launcher extends JPanel implements ActionListener {
 				}
 			}
 			if (fail == null){
-				File versionFile = new File(appData(), FOLDER_NAME);
-				versionFile = new File(versionFile, "version");
-				try {
-					if (versionFile.exists()){
-						BufferedReader currentVersionReader = new BufferedReader(
-								new InputStreamReader(new FileInputStream(versionFile)));
-						BufferedReader latestVersionReader = new BufferedReader(
-								new InputStreamReader(new URL(VERSION_FILE_LOCATION).openStream()));
-						String currentStage = "";
-						String currentVersion = "";
-						String latestStage = "";
-						String latestVersion = "";
-
-						String line;
-						while ((line = currentVersionReader.readLine()) != null){
-							if (line.startsWith("stage: ")){
-								currentStage = line.split(": ")[1];
-							}
-							else if (line.startsWith("version: ")){
-								currentVersion = line.split(": ")[1];
-							}
-						}
-						currentVersionReader.close();
-
-						while ((line = latestVersionReader.readLine()) != null){
-							if (line.startsWith("stage: ")){
-								latestStage = line.split(": ")[1];
-							}
-							else if (line.startsWith("version: ")){
-								latestVersion = line.split(": ")[1];
-							}
-						}
-						latestVersionReader.close();
-
-						boolean versionDifference = false;
-						String[] currentVersionArray = currentVersion.split("\\.");
-						String[] latestVersionArray = latestVersion.split("\\.");
-						if (currentVersionArray.length == latestVersionArray.length){
-							for (int i = 0; i < currentVersionArray.length; i++){
-								if (!currentVersionArray[i].equals(latestVersionArray[i])){
-									versionDifference = true;
-									break;
-								}
-							}
-						}
-						else
-							versionDifference = true;
-
-						if (!currentStage.equals(latestStage) || versionDifference){
-							updateAvailable = true;
-							updateMsg = "Would you like to update from version " + currentVersion +
-									" " + currentStage + " to version " + latestVersion + " " +
-									latestStage + "?";
-						}
-
-					}
-					else {
-						updateAvailable = true;
-						updateMsg = "No version file detected! Press \"Update\" to " +
-						"automatically begin an update.";
-					}
-				}
-				catch (Exception ex){
-					ex.printStackTrace();
-					progress = "Failed to get latest version";
-					fail = "Errors occurred; see console for details";
-					repaint();
+				if (update){
+					progress = "Downloading mineflat.jar";
 					try {
-						Thread.sleep(2000L);
+						main.delete();
+						downloadMain(main);
 					}
-					catch (Exception exc){
-						exc.printStackTrace();
+					catch (Exception ex){
+						ex.printStackTrace();
+						progress = "Failed to download mineflat.jar";
+						fail = "Error occurred; see console for details";
 					}
 					launch();
+				}
+				else {
+					File versionFile = new File(appData(), FOLDER_NAME);
+					versionFile = new File(versionFile, "version");
+					try {
+						if (versionFile.exists()){
+							BufferedReader currentVersionReader = new BufferedReader(
+									new InputStreamReader(new FileInputStream(versionFile)));
+							BufferedReader latestVersionReader = new BufferedReader(
+									new InputStreamReader(new URL(VERSION_FILE_LOCATION).openStream()));
+							String currentStage = "";
+							String currentVersion = "";
+							String latestStage = "";
+							String latestVersion = "";
+
+							String line;
+							while ((line = currentVersionReader.readLine()) != null){
+								if (line.startsWith("stage: ")){
+									currentStage = line.split(": ")[1];
+								}
+								else if (line.startsWith("version: ")){
+									currentVersion = line.split(": ")[1];
+								}
+							}
+							currentVersionReader.close();
+
+							while ((line = latestVersionReader.readLine()) != null){
+								if (line.startsWith("stage: ")){
+									latestStage = line.split(": ")[1];
+								}
+								else if (line.startsWith("version: ")){
+									latestVersion = line.split(": ")[1];
+								}
+							}
+							latestVersionReader.close();
+
+							boolean versionDifference = false;
+							String[] currentVersionArray = currentVersion.split("\\.");
+							String[] latestVersionArray = latestVersion.split("\\.");
+							if (currentVersionArray.length == latestVersionArray.length){
+								for (int i = 0; i < currentVersionArray.length; i++){
+									if (!currentVersionArray[i].equals(latestVersionArray[i])){
+										versionDifference = true;
+										break;
+									}
+								}
+							}
+							else
+								versionDifference = true;
+
+							if (!currentStage.equals(latestStage) || versionDifference && !update){
+								updateAvailable = true;
+								updateMsg = "Would you like to update from version " + currentVersion +
+										" " + currentStage + " to version " + latestVersion + " " +
+										latestStage + "?";
+							}
+
+						}
+						else if (!update){
+							updateAvailable = true;
+							updateMsg = "No version file detected! Press \"Update\" to " +
+									"automatically begin an update.";
+						}
+					}
+					catch (Exception ex){
+						ex.printStackTrace();
+						progress = "Failed to get latest version";
+						fail = "Errors occurred; see console for details";
+						repaint();
+						try {
+							Thread.sleep(2000L);
+						}
+						catch (Exception exc){
+							exc.printStackTrace();
+						}
+						launch();
+					}
 				}
 			}
 
@@ -599,7 +614,7 @@ public class Launcher extends JPanel implements ActionListener {
 		paintImmediately(0, 0, width, height);
 		try {
 			Runtime.getRuntime().exec(new String[]{"java", "-Djava.library.path=\"" +
-			nativeDir + "\"", "-jar", main.getPath()});
+					nativeDir + "\"", "-jar", main.getPath()});
 			pullThePlug();
 		}
 		catch (Exception ex){
@@ -656,5 +671,6 @@ public class Launcher extends JPanel implements ActionListener {
 		speed = 0;
 		aSize = -1;
 		eSize = -1;
+		createVersionFile();
 	}
 }
