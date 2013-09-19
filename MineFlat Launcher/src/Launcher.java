@@ -62,8 +62,8 @@ public class Launcher extends JPanel implements ActionListener {
 	 */
 	public static final String 	LIB_LOCATION = "http://slick.ninjacave.com/slick.zip";
 	/**
-	 * The location to download the program's main JAR from.
-	 * This can be replaced with a PHP script which serves the file in order to handle
+	 * The location from which to download the program's main JAR.
+	 * This may be replaced with a PHP script which serves the file in order to handle
 	 * validation and to keep track of downloads
 	 */
 	public static final String 	JAR_LOCATION = "http://amigocraft.net/mineflat/serve.php";
@@ -103,6 +103,7 @@ public class Launcher extends JPanel implements ActionListener {
 	Font smallFont = new Font("Verdana", Font.BOLD, 16);
 
 	public Launcher(){
+		f.setTitle(NAME + " Launcher");
 		if (progress == null){
 			this.setLayout(null);
 			play = new JButton("Play Game");
@@ -281,7 +282,11 @@ public class Launcher extends JPanel implements ActionListener {
 				}
 			}
 			if (fail == null){
-				if (update){
+				File versionFile = new File(appData(), FOLDER_NAME);
+				versionFile = new File(versionFile, "version");
+				if (update || !versionFile.exists()){
+					progress = "Creating version file";
+					createVersionFile();
 					progress = "Downloading mineflat.jar";
 					try {
 						main.delete();
@@ -295,8 +300,6 @@ public class Launcher extends JPanel implements ActionListener {
 					launch();
 				}
 				else {
-					File versionFile = new File(appData(), FOLDER_NAME);
-					versionFile = new File(versionFile, "version");
 					try {
 						if (versionFile.exists()){
 							BufferedReader currentVersionReader = new BufferedReader(
@@ -349,12 +352,6 @@ public class Launcher extends JPanel implements ActionListener {
 										" " + currentStage + " to version " + latestVersion + " " +
 										latestStage + "?";
 							}
-
-						}
-						else if (!update){
-							updateAvailable = true;
-							updateMsg = "No version file detected! Press \"Update\" to " +
-									"automatically begin an update.";
 						}
 					}
 					catch (Exception ex){
