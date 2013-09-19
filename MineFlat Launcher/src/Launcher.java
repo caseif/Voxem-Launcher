@@ -220,41 +220,48 @@ public class Launcher extends JPanel implements ActionListener {
 						List<String> extracted = new ArrayList<String>();
 						while (en.hasMoreElements()){
 							ZipEntry entry = (ZipEntry)en.nextElement();
-							if (entry.getName().equals("lib/lwjgl.jar") &&
-									(!lwjgl.exists() || update)){
-								progress = "Extracting LWJGL";
-								paintImmediately(0, 0, width, height);
-								unzip(zip, entry, lwjgl);
+							if (entry.getName().equals("lib/lwjgl.jar")){
+								if (!lwjgl.exists() || update){
+									progress = "Extracting LWJGL";
+									paintImmediately(0, 0, width, height);
+									unzip(zip, entry, lwjgl);
+								}
 								extracted.add("lwjgl");
 							}
-							else if (entry.getName().equals("lib/lwjgl_util.jar") &&
-									(!lwjgl_util.exists() || update)){
-								progress = "Extracting LWJGL Util";
-								paintImmediately(0, 0, width, height);
-								unzip(zip, entry, lwjgl_util);
+							else if (entry.getName().equals("lib/lwjgl_util.jar")){
+								if (!lwjgl_util.exists() || update){
+									progress = "Extracting LWJGL Util";
+									paintImmediately(0, 0, width, height);
+									unzip(zip, entry, lwjgl_util);
+								}
 								extracted.add("util");
 							}
-							else if (entry.getName().equals("lib/jinput.jar") &&
-									(!jinput.exists() || update)){
-								progress = "Extracting JInput";
-								paintImmediately(0, 0, width, height);
-								unzip(zip, entry, jinput);
+							else if (entry.getName().equals("lib/jinput.jar")){
+								if (!jinput.exists() || update){
+									progress = "Extracting JInput";
+									paintImmediately(0, 0, width, height);
+									unzip(zip, entry, jinput);
+								}
 								extracted.add("jinput");
 							}
-							else if (entry.getName().equals("lib/slick.jar") &&
-									(!slick.exists() || update)){
-								progress = "Extracting Slick";
-								paintImmediately(0, 0, width, height);
-								unzip(zip, entry, jinput);
+							else if (entry.getName().equals("lib/slick.jar")){
+								if (!slick.exists() || update){
+									progress = "Extracting Slick";
+									paintImmediately(0, 0, width, height);
+									unzip(zip, entry, jinput);
+								}
 								extracted.add("slick");
 							}
 							else if ((entry.getName().endsWith(osExt.get(os)) ||
 									(osExt.containsKey(osExt) &&
 											entry.getName().endsWith(osExt.get(os + "2")))) &&
 											!entry.isDirectory()){
-								progress = "Extracting natives";
-								paintImmediately(0, 0, width, height);
-								unzip(zip, entry, new File(nativeDir, entry.getName()));
+								File nativeFile = new File(nativeDir, entry.getName());
+								if (!nativeFile.exists() || !update){
+									progress = "Extracting natives";
+									paintImmediately(0, 0, width, height);
+									unzip(zip, entry, nativeFile);
+								}
 								extracted.add("native");
 							}
 						}
