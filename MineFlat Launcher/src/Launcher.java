@@ -31,6 +31,7 @@ import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 /**
  * 
@@ -74,6 +75,11 @@ public class Launcher extends JPanel implements ActionListener {
 	 * The rate in milliseconds at which to update the download speed
 	 */
 	public static final int		SPEED_UPDATE_INTERVAL = 500;
+
+	/**
+	 * If a download directory is specified, it will be stored here.
+	 */
+	public static String downloadDir = "";
 
 	private static final long serialVersionUID = 1L;
 
@@ -147,6 +153,8 @@ public class Launcher extends JPanel implements ActionListener {
 			this.remove(force);
 			this.remove(quit);
 			File dir = new File(appData(), FOLDER_NAME);
+			if (!downloadDir.isEmpty())
+				dir = new File(downloadDir, FOLDER_NAME);
 			dir.mkdir();
 			File bin = new File (dir, "bin");
 			if (update)
@@ -289,6 +297,8 @@ public class Launcher extends JPanel implements ActionListener {
 			}
 			if (fail == null){
 				File versionFile = new File(appData(), FOLDER_NAME);
+				if (!downloadDir.isEmpty())
+					versionFile = new File(downloadDir, FOLDER_NAME);
 				versionFile = new File(versionFile, "version");
 				if (update || !versionFile.exists()){
 					progress = "Creating version file";
@@ -426,6 +436,8 @@ public class Launcher extends JPanel implements ActionListener {
 			paintImmediately(0, 0, width, height);
 
 			File nativeDir = new File(appData(), FOLDER_NAME);
+			if (!downloadDir.isEmpty())
+				nativeDir = new File(downloadDir, FOLDER_NAME);
 			nativeDir = new File(nativeDir, "bin");
 			File main = new File(nativeDir, JAR_NAME);
 			nativeDir = new File(nativeDir, "natives");
@@ -483,9 +495,26 @@ public class Launcher extends JPanel implements ActionListener {
 		catch (Exception ex){}
 	}
 
-	public static void main(String[] args) {
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
+	public static void main(String[] args){
+		int i = 0;
+		for (String s : args){
+			if (s.equalsIgnoreCase("-dir")){
+				downloadDir = args[i + 1];
+				if (!new File(downloadDir).exists()){
+					try {
+						new File(downloadDir).mkdir();
+					}
+					catch (Exception ex){
+						ex.printStackTrace();
+						System.err.println("Failed to create download directory");
+						System.exit(1);
+					}
+				}
+			}
+			i += 1;
+		}
+		SwingUtilities.invokeLater(new Runnable(){
+			public void run(){
 				createAndShowGUI();
 			}
 		});
@@ -576,6 +605,8 @@ public class Launcher extends JPanel implements ActionListener {
 	private static boolean createVersionFile(){
 		try {
 			File versionFile = new File(appData(), FOLDER_NAME);
+			if (!downloadDir.isEmpty())
+				versionFile = new File(downloadDir, FOLDER_NAME);
 			versionFile = new File(versionFile, "version");
 			if (versionFile.exists())
 				versionFile.delete();
@@ -601,6 +632,8 @@ public class Launcher extends JPanel implements ActionListener {
 
 	private void launch(){
 		File nativeDir = new File(appData(), FOLDER_NAME);
+		if (!downloadDir.isEmpty())
+			nativeDir = new File(downloadDir, FOLDER_NAME);
 		nativeDir = new File(nativeDir, "bin");
 		File main = new File(nativeDir, JAR_NAME);
 		nativeDir = new File(nativeDir, "native");
