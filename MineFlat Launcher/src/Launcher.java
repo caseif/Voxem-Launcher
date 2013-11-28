@@ -14,12 +14,15 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -81,31 +84,34 @@ public class Launcher extends JPanel implements ActionListener {
 	 */
 	public static String downloadDir = "";
 
+	private static Launcher launcher; // standard workaround for static methods
+
 	private static final long serialVersionUID = 1L;
 
-	public static JFrame f;
+	public static JFrame f; // need I explain this?
 
-	protected JButton play, force, quit, updateYes, updateNo;
+	protected JButton play, force, quit, updateYes, updateNo; // or this?
 
+	// maps OS string to library extension (e.g. .dll, .so, whatever ridiculous string it is for Mac)
 	public static HashMap<String, String> osExt = new HashMap<String, String>();
 
-	private int btnWidth = 200;
-	private int btnHeight = 50;
-	private static int width = 800;
-	private static int height = 500;
-	private boolean update = false;
-	boolean updateAvailable = false;
-	public static String progress = null;
-	public static String fail = null;
-	public static double eSize = -1;
-	public static double aSize = -1;
-	public static double lastTime = -1;
-	public static double lastSize = -1;
-	public static double speed = -1;
-	public static String updateMsg = null;
+	private int btnWidth = 200; // width of buttons
+	private int btnHeight = 50; // height of buttons
+	private static int width = 800; // width of the window
+	private static int height = 500; // height of the window
+	private boolean update = false; // whether or not the user chose to update
+	boolean updateAvailable = false; // self-explanatory
+	public static String progress = null; // current status message
+	public static String fail = null; // message displayed when an error occurs
+	public static double eSize = -1; // expected size of current file
+	public static double aSize = -1; // actual size of downloaded file (atm)
+	public static double lastTime = -1; // last time download GUI was updated
+	public static double lastSize = -1; // last size of file (used in calculating speed)
+	public static double speed = -1; // download speed
+	public static String updateMsg = null; // message displayed when an update is available
 
-	Font font = new Font("Verdana", Font.BOLD, 30);
-	Font smallFont = new Font("Verdana", Font.BOLD, 16);
+	Font font = new Font("Verdana", Font.BOLD, 30); // the font to be used in most places
+	Font smallFont = new Font("Verdana", Font.BOLD, 16); // literally used only for the update message
 
 	public Launcher(){
 		f.setTitle(NAME + " Launcher");
@@ -141,14 +147,22 @@ public class Launcher extends JPanel implements ActionListener {
 			quit.setBounds((width / 2) - (btnWidth / 2), 300, btnWidth, btnHeight);
 			this.add(quit);
 		}
+		launcher = this;
 	}
 
 	public void actionPerformed(ActionEvent e){
+		String os = "";
+		if (System.getProperty("os.name").toUpperCase().contains("WIN"))
+			os = "windows";
+		else if (System.getProperty("os.name").toUpperCase().contains("MAC"))
+			os = "macosx";
+		else
+			os = "linux";
+		osExt.put("windows", ".dll");
+		osExt.put("macosx", ".jnilib");
+		osExt.put("macosx2", ".dylib");
+		osExt.put("linux", ".so");
 		if (e.getActionCommand().equals("play")){
-			osExt.put("windows", ".dll");
-			osExt.put("macosx", ".jnilib");
-			osExt.put("macosx2", ".dylib");
-			osExt.put("linux", ".so");
 			this.remove(play);
 			this.remove(force);
 			this.remove(quit);
@@ -165,13 +179,6 @@ public class Launcher extends JPanel implements ActionListener {
 			File lwjgl_util = new File(bin, "lwjgl_util.jar");
 			File jinput = new File(bin, "jinput.jar");
 			File slick = new File(bin, "slick.jar");
-			String os = "";
-			if (System.getProperty("os.name").toUpperCase().contains("WIN"))
-				os = "windows";
-			else if (System.getProperty("os.name").toUpperCase().contains("MAC"))
-				os = "macosx";
-			else
-				os = "linux";
 			File nativeDir = new File(bin, "native");
 			nativeDir = new File(nativeDir, os);
 			if (!lwjgl.exists() || !lwjgl_util.exists() || !jinput.exists() ||
@@ -211,8 +218,9 @@ public class Launcher extends JPanel implements ActionListener {
 					}
 					catch (Exception ex){
 						ex.printStackTrace();
+						createExceptionLog(ex);
 						progress = "Failed to download libraries";
-						fail = "Errors occurred; see console for details";
+						fail = "Errors occurred; see log file for details";
 						repaint();
 					}
 				}
@@ -273,24 +281,35 @@ public class Launcher extends JPanel implements ActionListener {
 								extracted.add("native");
 							}
 						}
-						if (!extracted.contains("lwjgl"))
-							fail = "Failed to extract lwjgl.jar from library ZIP";
-						else if (!extracted.contains("util"))
-							fail = "Failed to extract lwjgl_util.jar from library ZIP";
-						else if (!extracted.contains("jinput"))
-							fail = "Failed to extract jinput.jar from library ZIP";
-						else if (!extracted.contains("native"))
-							fail = "Failed to extract natives from library ZIP";
-						else if (!extracted.contains("slick"))
-							fail = "Failed to extract slick.jar from library ZIP";
+						if (!extracted.contains("lwjgl")){
+							progress = "Failed to extract lwjgl.jar from library ZIP";
+							fail = "Errors occurred; see log file for details";
+						}
+						else if (!extracted.contains("util")){
+							progress = "Failed to extract lwjgl_util.jar from library ZIP";
+							fail = "Errors occurred; see log file for details";
+						}
+						else if (!extracted.contains("jinput")){
+							progress = "Failed to extract jinput.jar from library ZIP";
+							fail = "Errors occurred; see log file for details";
+						}
+						else if (!extracted.contains("native")){
+							progress = "Failed to extract natives from library ZIP";
+							fail = "Errors occurred; see log file for details";
+						}
+						else if (!extracted.contains("slick")){
+							progress = "Failed to extract slick.jar from library ZIP";
+							fail = "Errors occurred; see log file for details";
+						}
 						repaint();
 						zip.close();
 						lwjglZip.delete();
 					}
 					catch (Exception ex){
 						ex.printStackTrace();
+						createExceptionLog(ex);
 						progress = "Failed to extract libraries";
-						fail = "Errors occurred; see console for details";
+						fail = "Errors occurred; see log file for details";
 						repaint();
 					}
 				}
@@ -310,8 +329,9 @@ public class Launcher extends JPanel implements ActionListener {
 					}
 					catch (Exception ex){
 						ex.printStackTrace();
-						progress = "Failed to download mineflat.jar";
-						fail = "Error occurred; see console for details";
+						createExceptionLog(ex);
+						progress = "Failed to download main JAR";
+						fail = "Error occurred; see log file for details";
 					}
 					launch();
 				}
@@ -321,7 +341,8 @@ public class Launcher extends JPanel implements ActionListener {
 							BufferedReader currentVersionReader = new BufferedReader(
 									new InputStreamReader(new FileInputStream(versionFile)));
 							BufferedReader latestVersionReader = new BufferedReader(
-									new InputStreamReader(new URL(VERSION_FILE_LOCATION).openStream()));
+									new InputStreamReader(new URL(VERSION_FILE_LOCATION)
+									.openStream()));
 							String currentStage = "";
 							String currentVersion = "";
 							String latestStage = "";
@@ -364,21 +385,22 @@ public class Launcher extends JPanel implements ActionListener {
 
 							if (!currentStage.equals(latestStage) || versionDifference && !update){
 								updateAvailable = true;
-								updateMsg = "Would you like to update from version " + currentVersion +
-										" " + currentStage + " to version " + latestVersion + " " +
-										latestStage + "?";
+								updateMsg = "Would you like to update from version " +
+										currentVersion + " " + currentStage + " to version " +
+										latestVersion + " " + latestStage + "?";
 							}
 						}
 					}
 					catch (Exception ex){
 						ex.printStackTrace();
+						createExceptionLog(ex);
 						progress = "Failed to get latest version";
-						fail = "Errors occurred; see console for details";
+						fail = "Errors occurred; see log file for details";
 						repaint();
 						try {
 							Thread.sleep(2000L);
 						}
-						catch (Exception exc){
+						catch (Exception exc){ // wakey wakey little thread
 							exc.printStackTrace();
 						}
 						launch();
@@ -441,26 +463,21 @@ public class Launcher extends JPanel implements ActionListener {
 			nativeDir = new File(nativeDir, "bin");
 			File main = new File(nativeDir, JAR_NAME);
 			nativeDir = new File(nativeDir, "natives");
-			String os = "";
-			if (System.getProperty("os.name").toUpperCase().contains("WIN"))
-				os = "windows";
-			else if (System.getProperty("os.name").toUpperCase().contains("MAC"))
-				os = "macosx";
-			else
-				os = "linux";
 			nativeDir = new File(nativeDir, os);
 
 			progress = "Downloading " + JAR_NAME;
 			paintImmediately(0, 0, width, height);
 			try {
 				downloadMain(main);
-
 				createVersionFile();
-
 				launch();
 			}
 			catch (Exception ex){
 				ex.printStackTrace();
+				createExceptionLog(ex);
+				progress = "Failed to download main JAR";
+				fail = "Errors occurred; see log file for details";
+				paintImmediately(0, 0, width, height);
 			}
 		}
 
@@ -506,8 +523,9 @@ public class Launcher extends JPanel implements ActionListener {
 					}
 					catch (Exception ex){
 						ex.printStackTrace();
-						System.err.println("Failed to create download directory");
-						System.exit(1);
+						progress = "Failed to create download directory";
+						fail = "Errors occurred; see console for details";
+						launcher.paintImmediately(0, 0, width, height);
 					}
 				}
 			}
@@ -536,24 +554,26 @@ public class Launcher extends JPanel implements ActionListener {
 			g.drawString(progress, centerText(g, progress), height / 2);
 			if (fail != null)
 				g.drawString(fail, centerText(g, fail), height / 2 + 50);
-			if (aSize != -1 && eSize != -1){
-				String s = (int)((double)aSize / 1024) + "/" + (int)((double)eSize / 1024) + " kb";
-				g.drawString(s, centerText(g, s), height / 2 + 40);
-				String sp = "@" + (int)(speed * 8) + " Kbps";
-				if (speed * 8 >= 1024)
-					sp = "@" + String.format("%.2f", (speed * 8 / 1024)) + " Mbps";
-				g.drawString(sp, centerText(g, sp), height / 2 + 80);
-				int barWidth = 500;
-				int barHeight = 35;
-				g.setColor(Color.LIGHT_GRAY);
-				g.drawRect(width / 2 - barWidth / 2, height / 2 + 100, barWidth, barHeight);
-				g.setColor(Color.GREEN);
-				g.fillRect(width / 2 - barWidth / 2 + 1, height / 2 + 100 + 1,
-						(int)(((double)aSize / (double)eSize) * (double)barWidth - 2),
-						barHeight - 1);
-				g.setColor(new Color(.2f, .2f, .2f));
-				int percent = (int)((double)aSize / (double)eSize * 100);
-				g.drawString(percent + "%", centerText(g, percent + "%"), height / 2 + 128);
+			else {
+				if (aSize != -1 && eSize != -1){
+					String s = (int)((double)aSize / 1024) + "/" + (int)((double)eSize / 1024) + " kb";
+					g.drawString(s, centerText(g, s), height / 2 + 40);
+					String sp = "@" + (int)(speed * 8) + " Kbps";
+					if (speed * 8 >= 1024)
+						sp = "@" + String.format("%.2f", (speed * 8 / 1024)) + " Mbps";
+					g.drawString(sp, centerText(g, sp), height / 2 + 80);
+					int barWidth = 500;
+					int barHeight = 35;
+					g.setColor(Color.LIGHT_GRAY);
+					g.drawRect(width / 2 - barWidth / 2, height / 2 + 100, barWidth, barHeight);
+					g.setColor(Color.GREEN);
+					g.fillRect(width / 2 - barWidth / 2 + 1, height / 2 + 100 + 1,
+							(int)(((double)aSize / (double)eSize) * (double)barWidth - 2),
+							barHeight - 1);
+					g.setColor(new Color(.2f, .2f, .2f));
+					int percent = (int)((double)aSize / (double)eSize * 100);
+					g.drawString(percent + "%", centerText(g, percent + "%"), height / 2 + 128);
+				}
 			}
 		}
 	}
@@ -578,9 +598,17 @@ public class Launcher extends JPanel implements ActionListener {
 			return System.getenv("APPDATA");
 		else if (OS.contains("MAC"))
 			return System.getProperty("user.home") + "/Library/Application Support";
-		try {return new File(Launcher.class.getProtectionDomain()
-				.getCodeSource().getLocation().toURI().getPath()).getParent();}
-		catch (Exception ex){ex.printStackTrace();}
+		try {
+			return "/home/" + convertStreamToString(
+					Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", "echo $USER"})
+					.getInputStream(), false);
+		}
+		catch (Exception ex){
+			ex.printStackTrace();
+			progress = "Failed to get home directory";
+			fail = "Errors occurred; see console for details";
+			launcher.paintImmediately(0, 0, width, height);
+		}
 		return System.getProperty("user.dir");
 	}
 
@@ -599,6 +627,10 @@ public class Launcher extends JPanel implements ActionListener {
 		}
 		catch (Exception ex){
 			ex.printStackTrace();
+			createExceptionLog(ex);
+			progress = "Failed to unzip LWJGL archive";
+			fail = "Errors occurred; see log file for details";
+			launcher.paintImmediately(0, 0, width, height);
 		}
 	}
 
@@ -626,6 +658,10 @@ public class Launcher extends JPanel implements ActionListener {
 		}
 		catch (Exception ex){
 			ex.printStackTrace();
+			createExceptionLog(ex);
+			progress = "Failed to create new version file";
+			fail = "Errors occurred; see log file for details";
+			launcher.paintImmediately(0, 0, width, height);
 		}
 		return false;
 	}
@@ -649,14 +685,27 @@ public class Launcher extends JPanel implements ActionListener {
 		progress = "Launching";
 		paintImmediately(0, 0, width, height);
 		try {
-			Runtime.getRuntime().exec(new String[]{"java", "-Djava.library.path=\"" +
-					nativeDir + "\"", "-jar", main.getPath()});
-			pullThePlug();
+			InputStream errStream = Runtime.getRuntime().exec(
+					new String[]{"java", "-Djava.library.path=" +
+							nativeDir, "-jar", main.getPath()}, null,
+							new File(appData(), FOLDER_NAME + File.separator + "bin")).getErrorStream();
+			String errors = convertStreamToString(errStream, true);			
+			if (errors == "")
+				pullThePlug();
+			else {
+				System.err.println(errors);
+				createExceptionLog(errors, true);
+				progress = "Exception occurred in game thread";
+				fail = "Errors occurred; see log file for details";
+				paintImmediately(0, 0, width, height);
+			}
 		}
 		catch (Exception ex){
 			ex.printStackTrace();
-			progress = "Failed to launch game";
-			fail = "Errors occurred; see console for details";
+			createExceptionLog(ex);
+			progress = "Exception occurred in launcher thread";
+			fail = "Errors occurred; see log file for details";
+			paintImmediately(0, 0, width, height);
 		}
 	}
 
@@ -668,7 +717,7 @@ public class Launcher extends JPanel implements ActionListener {
 			conn.getInputStream();
 			return conn.getContentLength();
 		}
-		catch (Exception e) {
+		catch (Exception e){
 			return -1;
 		}
 		finally {
@@ -708,5 +757,134 @@ public class Launcher extends JPanel implements ActionListener {
 		aSize = -1;
 		eSize = -1;
 		createVersionFile();
+	}
+
+	public static String convertStreamToString(InputStream is, boolean newlines){
+		/*
+		 * Why don't people update to Java 7? Like, seriously. It's November as of typing
+		 * this, Java 8 is some 4 months away, and there are still people who use my code
+		 * who are running Java 6. Like 5% of the users are using an obsolete version of
+		 * Java from 2011. It's not like it's even that hard to update. Honestly, you just
+		 * click a couple of buttons, check a box, and bam, you've made my job easier. And
+		 * yet, because these people are so lazy, I'm forced to compile with Java 6 to
+		 * accommodate for this ridiculous minority. I say this because I could accomplish
+		 * what this try-block does in about 2 lines of code, but nope, gotta use Java 6.
+		 * I'm really psyched for lambda expressions in Java 8, but I can't even use those
+		 * until Java 9 is out, because there'll be those morons who just refuse to update
+		 * past 7. It's stupid, it really is.
+		 */
+		InputStreamReader isr = new InputStreamReader(is);
+		StringBuilder sb = new StringBuilder();
+		BufferedReader br = new BufferedReader(isr);
+		try {
+			String read = br.readLine();
+			while(read != null) {
+				sb.append(read);
+				if (newlines)
+					sb.append("\n");
+				read = br.readLine();
+			}
+		}
+		catch (Exception ex){
+			// we're screwed
+			ex.printStackTrace();
+			//createExceptionLog(); // I'm leaving this here as a lesson to my future self.
+			progress = "Failed to get output from launch command";
+			fail = "Errors occurred; see log file for details";
+			launcher.paintImmediately(0, 0, width, height);
+		}
+		finally {
+			try {
+				isr.close();
+				br.close();
+			}
+			catch (Exception ex){
+				// dunno why this would happen anyway, but whatever
+				ex.printStackTrace();
+			}
+		}
+		return sb.toString();
+	}
+
+	public static void createExceptionLog(Exception ex){
+		createExceptionLog(ex.getMessage() + "\n" + ex.getStackTrace(), false);
+	}
+	
+	public static void createExceptionLog(String s){
+		createExceptionLog(s, false);
+	}
+	
+	public static void createExceptionLog(Exception ex, boolean gameThread){
+		createExceptionLog(ex.getMessage() + "\n" + ex.getStackTrace(), gameThread);
+	}
+
+	public static void createExceptionLog(String s, boolean gameThread){
+		Calendar cal = Calendar.getInstance();
+		String minute = cal.get(Calendar.MINUTE) + "";
+		if (minute.length() < 2)
+			minute = "0" + minute;
+		String second = cal.get(Calendar.SECOND) + "";
+		if (second.length() < 2)
+			second = "0" + second;
+		String stage = "";
+		String version = "";
+		try {
+		File versionFile = new File(appData(), FOLDER_NAME);
+		if (!downloadDir.isEmpty())
+			versionFile = new File(downloadDir, FOLDER_NAME);
+		versionFile = new File(versionFile, "version");
+		BufferedReader currentVersionReader = new BufferedReader(
+				new InputStreamReader(new FileInputStream(versionFile)));
+		String line;
+		while ((line = currentVersionReader.readLine()) != null){
+			if (line.startsWith("stage: ")){
+				stage = line.split(": ")[1];
+			}
+			else if (line.startsWith("version: ")){
+				version = line.split(": ")[1];
+			}
+		}
+		currentVersionReader.close();
+		}
+		catch (Exception ex){
+			ex.printStackTrace();
+			stage = "Failed to determine";
+			version = "Failed to determine";
+		}
+		String log = "----------------------\n";
+		log += "| MINEFLAT ERROR LOG |\n";
+		log += "----------------------\n";
+		log += "Generated at " + cal.get(Calendar.HOUR_OF_DAY) + ":" +
+				minute + ":" + second + " on " +
+				cal.get(Calendar.MONTH) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "-" +
+				cal.get(Calendar.YEAR) + "\n";
+		log += "Exception occurred in game thread: " + gameThread + "\n";
+		log += "MineFlat stage: " + stage + "\n";
+		log += "MineFlat version: " + version + "\n";
+		log += "\n----------------BEGIN ERROR LOG----------------\n";
+		log += s;
+		log += "-----------------END ERROR LOG-----------------\n";
+		String time = cal.get(Calendar.HOUR_OF_DAY) + ":" + minute + ":" +
+				second + "_" + cal.get(Calendar.MONTH) + "-" +
+				cal.get(Calendar.DAY_OF_MONTH) + "-" + cal.get(Calendar.YEAR);
+		try {
+			if (!new File(appData(), "MineFlat" + File.separator + "errorlogs").exists())
+				new File(appData(), "MineFlat" + File.separator + "errorlogs").mkdir();
+			new File(appData(), "MineFlat" + File.separator +
+					"errorlogs" + File.separator + time + ".log").createNewFile();
+			System.out.println("Saved error log to " +
+					appData() + File.separator + "MineFlat" + File.separator +
+					"errorlogs" + File.separator + time + ".log");
+			PrintWriter writer = new PrintWriter(appData() + File.separator + "MineFlat" +
+					File.separator + "errorlogs" + File.separator + time + ".log", "UTF-8");
+			writer.print(log);
+			writer.close();
+		}
+		catch (Exception ex){
+			// Well, shit.
+			ex.printStackTrace();
+			Launcher.progress = "An exception occurred while saving an exception log.";
+			Launcher.fail = "Errors occurred; see console for details.";
+		}
 	}
 }
