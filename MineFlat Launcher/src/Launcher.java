@@ -684,8 +684,8 @@ public class Launcher extends JPanel implements ActionListener {
 					new String[]{"java", "-Djava.library.path=" +
 							nativeDir, "-jar", main.getPath()}, null,
 							new File(appData(), FOLDER_NAME + File.separator + "bin")).getErrorStream();
-			String errors = convertStreamToString(errStream, true);			
-			if (errors == "")
+			String errors = convertStreamToString(errStream, true).replaceAll("\\s+","");
+			if (errors.isEmpty())
 				pullThePlug();
 			else {
 				System.err.println(errors);
