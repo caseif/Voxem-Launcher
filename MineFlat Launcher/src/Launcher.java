@@ -49,7 +49,7 @@ import javax.swing.SwingUtilities;
 public class Launcher extends JPanel implements ActionListener {
 
 	/**
-	 * The name of the program to be launched (used only in GUI)
+	 * The name of the program to be launched
 	 */
 	public static final String 	NAME = "MineFlat";
 	/**
@@ -59,7 +59,7 @@ public class Launcher extends JPanel implements ActionListener {
 	/**
 	 * The name of the program's folder in the application data directory
 	 */
-	public static final String 	FOLDER_NAME = "MineFlat";
+	public static final String 	FOLDER_NAME = ".mineflat";
 	/**
 	 * The location to download the LWJGL/Slick libraries from.
 	 */
@@ -150,29 +150,32 @@ public class Launcher extends JPanel implements ActionListener {
 		launcher = this;
 	}
 
-	public void actionPerformed(ActionEvent e){
+	public void actionPerformed(ActionEvent e){ // button was pressed
+		// OS used in determining which natives to extract
 		String os = "";
 		if (System.getProperty("os.name").toUpperCase().contains("WIN"))
 			os = "windows";
 		else if (System.getProperty("os.name").toUpperCase().contains("MAC"))
 			os = "macosx";
 		else
-			os = "linux";
+			os = "linux"; // probably not the best way to do this, but what else could it be?
+		// associate the OS with the extension
 		osExt.put("windows", ".dll");
 		osExt.put("macosx", ".jnilib");
 		osExt.put("macosx2", ".dylib");
 		osExt.put("linux", ".so");
-		if (e.getActionCommand().equals("play")){
+		if (e.getActionCommand().equals("play")){ // play button was pressed
+			// clear dem buttons
 			this.remove(play);
 			this.remove(force);
 			this.remove(quit);
 			File dir = new File(appData(), FOLDER_NAME);
-			if (!downloadDir.isEmpty())
+			if (!downloadDir.isEmpty()) // -d flag was used
 				dir = new File(downloadDir, FOLDER_NAME);
 			dir.mkdir();
 			File bin = new File (dir, "bin");
 			if (update)
-				bin.delete();
+				bin.delete(); // remove bin folder altogether because it's the easiest way
 			bin.mkdir();
 			File main = new File(bin, JAR_NAME);
 			File lwjgl = new File(bin, "lwjgl.jar");
@@ -182,47 +185,45 @@ public class Launcher extends JPanel implements ActionListener {
 			File nativeDir = new File(bin, "native");
 			nativeDir = new File(nativeDir, os);
 			if (!lwjgl.exists() || !lwjgl_util.exists() || !jinput.exists() ||
-					!nativeDir.exists() || update){
+					!nativeDir.exists() || update){ // we should probably download the libraries
 				File lwjglZip = new File(bin, "lwjgl.zip");
-				if (!lwjglZip.exists() || update){
-					progress = "Downloading libraries";
-					paintImmediately(0, 0, width, height);
-					try {
-						Downloader dl = new Downloader(new URL(
-								LIB_LOCATION),
-								lwjglZip.getPath(), "LWJGL");
-						eSize = getFileSize(new URL(LIB_LOCATION));
-						Thread t = new Thread(dl);
-						t.start();
-						while (t.isAlive()){
-							aSize = lwjglZip.length();
-							if (lastTime != -1){
-								if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){
-									speed = ((aSize - lastSize) / 1000) /
-											((System.currentTimeMillis() - lastTime) / 1000);
-									lastTime = System.currentTimeMillis();
-									lastSize = aSize;
-								}
-							}
-							else {
-								speed = 0;
+				progress = "Downloading libraries";
+				paintImmediately(0, 0, width, height);
+				try {
+					Downloader dl = new Downloader(new URL(
+							LIB_LOCATION),
+							lwjglZip.getPath(), "LWJGL");
+					eSize = getFileSize(new URL(LIB_LOCATION));
+					Thread t = new Thread(dl);
+					t.start();
+					while (t.isAlive()){
+						aSize = lwjglZip.length();
+						if (lastTime != -1){
+							if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){
+								speed = ((aSize - lastSize) / 1000) /
+										((System.currentTimeMillis() - lastTime) / 1000);
 								lastTime = System.currentTimeMillis();
+								lastSize = aSize;
 							}
-							paintImmediately(0, 0, width, height);
 						}
-						lastTime = -1;
-						lastSize = 0;
-						speed = 0;
-						aSize = -1;
-						eSize = -1;
+						else {
+							speed = 0;
+							lastTime = System.currentTimeMillis();
+						}
+						paintImmediately(0, 0, width, height);
 					}
-					catch (Exception ex){
-						ex.printStackTrace();
-						createExceptionLog(ex);
-						progress = "Failed to download libraries";
-						fail = "Errors occurred; see log file for details";
-						repaint();
-					}
+					lastTime = -1;
+					lastSize = 0;
+					speed = 0;
+					aSize = -1;
+					eSize = -1;
+				}
+				catch (Exception ex){
+					ex.printStackTrace();
+					createExceptionLog(ex);
+					progress = "Failed to download libraries";
+					fail = "Errors occurred; see log file for details";
+					repaint();
 				}
 				if (fail == null){
 					if (!new File(bin, "native").exists())
@@ -314,20 +315,20 @@ public class Launcher extends JPanel implements ActionListener {
 					}
 				}
 			}
-			if (fail == null){
+			if (fail == null){ // make sure something didn't get screwed up
 				File versionFile = new File(appData(), FOLDER_NAME);
 				if (!downloadDir.isEmpty())
 					versionFile = new File(downloadDir, FOLDER_NAME);
 				versionFile = new File(versionFile, "version");
 				if (update || !versionFile.exists()){
-					progress = "Creating version file";
+					progress = "Creating version file"; // no one will ever see this -_-
 					createVersionFile();
-					progress = "Downloading mineflat.jar";
+					progress = "Downloading " + JAR_NAME;
 					try {
 						main.delete();
 						downloadMain(main);
 					}
-					catch (Exception ex){
+					catch (Exception ex){ // whoopsy daisy!
 						ex.printStackTrace();
 						createExceptionLog(ex);
 						progress = "Failed to download main JAR";
@@ -337,7 +338,7 @@ public class Launcher extends JPanel implements ActionListener {
 				}
 				else {
 					try {
-						if (versionFile.exists()){
+						if (versionFile.exists()){ // check that the main JAR is up to date
 							BufferedReader currentVersionReader = new BufferedReader(
 									new InputStreamReader(new FileInputStream(versionFile)));
 							BufferedReader latestVersionReader = new BufferedReader(
@@ -439,19 +440,15 @@ public class Launcher extends JPanel implements ActionListener {
 				}
 			}
 		}
-
 		else if (e.getActionCommand().equals("force")){
 			force.setEnabled(false);
 			force.setText("Will Force!");
 			update = true;
 		}
-
 		else if (e.getActionCommand().equals("quit")){
 			pullThePlug();
 		}
-
 		else if (e.getActionCommand().equals("yesUpdate")){
-
 			updateMsg = null;
 			remove(updateYes);
 			remove(updateNo);
@@ -492,14 +489,12 @@ public class Launcher extends JPanel implements ActionListener {
 		}
 	}
 
-	private static void createAndShowGUI() {
-
+	// in a separate method for organizational purposes
+	private static void createAndShowGUI(){
 		f = new JFrame(" Launcher");
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
 		Launcher l = new Launcher();
 		l.setOpaque(true);
-
 		f.setContentPane(l);
 		f.pack();
 		f.setVisible(true);
@@ -558,9 +553,9 @@ public class Launcher extends JPanel implements ActionListener {
 				if (aSize != -1 && eSize != -1){
 					String s = (int)((double)aSize / 1024) + "/" + (int)((double)eSize / 1024) + " kb";
 					g.drawString(s, centerText(g, s), height / 2 + 40);
-					String sp = "@" + (int)(speed * 8) + " Kbps";
-					if (speed * 8 >= 1024)
-						sp = "@" + String.format("%.2f", (speed * 8 / 1024)) + " Mbps";
+					String sp = "@" + (int)speed + " KB/s";
+					if (speed >= 1024)
+						sp = "@" + String.format("%.2f", (speed / 1024)) + " MB/s";
 					g.drawString(sp, centerText(g, sp), height / 2 + 80);
 					int barWidth = 500;
 					int barHeight = 35;
@@ -761,12 +756,12 @@ public class Launcher extends JPanel implements ActionListener {
 
 	public static String convertStreamToString(InputStream is, boolean newlines){
 		/*
-		 * Why don't people update to Java 7? Like, seriously. It's November as of typing
-		 * this, Java 8 is some 4 months away, and there are still people who use my code
-		 * who are running Java 6. Like 5% of the users are using an obsolete version of
-		 * Java from 2011. It's not like it's even that hard to update. Honestly, you just
-		 * click a couple of buttons, check a box, and bam, you've made my job easier. And
-		 * yet, because these people are so lazy, I'm forced to compile with Java 6 to
+		 * Why don't people update to Java 7? Like, seriously. It's November of 2013 as of
+		 * typing this, Java 8 is some 4 months away, and there are still people who use my
+		 * code who are running Java 6. Like 5% of the users are using an obsolete version
+		 * of Java from 2011. It's not like it's even that hard to update. Honestly, you
+		 * just click a couple of buttons, check a box, and bam, you've made my job easier.
+		 * And yet, because these people are so lazy, I'm forced to compile with Java 6 to
 		 * accommodate for this ridiculous minority. I say this because I could accomplish
 		 * what this try-block does in about 2 lines of code, but nope, gotta use Java 6.
 		 * I'm really psyched for lambda expressions in Java 8, but I can't even use those
@@ -786,7 +781,6 @@ public class Launcher extends JPanel implements ActionListener {
 			}
 		}
 		catch (Exception ex){
-			// we're screwed
 			ex.printStackTrace();
 			//createExceptionLog(); // I'm leaving this here as a lesson to my future self.
 			progress = "Failed to get output from launch command";
@@ -809,11 +803,11 @@ public class Launcher extends JPanel implements ActionListener {
 	public static void createExceptionLog(Exception ex){
 		createExceptionLog(ex.getMessage() + "\n" + ex.getStackTrace(), false);
 	}
-	
+
 	public static void createExceptionLog(String s){
 		createExceptionLog(s, false);
 	}
-	
+
 	public static void createExceptionLog(Exception ex, boolean gameThread){
 		createExceptionLog(ex.getMessage() + "\n" + ex.getStackTrace(), gameThread);
 	}
@@ -829,38 +823,38 @@ public class Launcher extends JPanel implements ActionListener {
 		String stage = "";
 		String version = "";
 		try {
-		File versionFile = new File(appData(), FOLDER_NAME);
-		if (!downloadDir.isEmpty())
-			versionFile = new File(downloadDir, FOLDER_NAME);
-		versionFile = new File(versionFile, "version");
-		BufferedReader currentVersionReader = new BufferedReader(
-				new InputStreamReader(new FileInputStream(versionFile)));
-		String line;
-		while ((line = currentVersionReader.readLine()) != null){
-			if (line.startsWith("stage: ")){
-				stage = line.split(": ")[1];
+			File versionFile = new File(appData(), FOLDER_NAME);
+			if (!downloadDir.isEmpty())
+				versionFile = new File(downloadDir, FOLDER_NAME);
+			versionFile = new File(versionFile, "version");
+			BufferedReader currentVersionReader = new BufferedReader(
+					new InputStreamReader(new FileInputStream(versionFile)));
+			String line;
+			while ((line = currentVersionReader.readLine()) != null){
+				if (line.startsWith("stage: ")){
+					stage = line.split(": ")[1];
+				}
+				else if (line.startsWith("version: ")){
+					version = line.split(": ")[1];
+				}
 			}
-			else if (line.startsWith("version: ")){
-				version = line.split(": ")[1];
-			}
-		}
-		currentVersionReader.close();
+			currentVersionReader.close();
 		}
 		catch (Exception ex){
 			ex.printStackTrace();
 			stage = "Failed to determine";
 			version = "Failed to determine";
 		}
-		String log = "----------------------\n";
-		log += "| MINEFLAT ERROR LOG |\n";
-		log += "----------------------\n";
+		String log = "----------------------\n"; // ASCII blocks like a boss
+		log += "| " + NAME.toUpperCase() + " ERROR LOG |\n";
+		log += "----------------------\n"; // #2fancy4u
 		log += "Generated at " + cal.get(Calendar.HOUR_OF_DAY) + ":" +
 				minute + ":" + second + " on " +
 				cal.get(Calendar.MONTH) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "-" +
 				cal.get(Calendar.YEAR) + "\n";
 		log += "Exception occurred in game thread: " + gameThread + "\n";
-		log += "MineFlat stage: " + stage + "\n";
-		log += "MineFlat version: " + version + "\n";
+		log += NAME + " stage: " + stage + "\n";
+		log += NAME + " version: " + version + "\n";
 		log += "\n----------------BEGIN ERROR LOG----------------\n";
 		log += s;
 		log += "-----------------END ERROR LOG-----------------\n";
@@ -868,14 +862,14 @@ public class Launcher extends JPanel implements ActionListener {
 				second + "_" + cal.get(Calendar.MONTH) + "-" +
 				cal.get(Calendar.DAY_OF_MONTH) + "-" + cal.get(Calendar.YEAR);
 		try {
-			if (!new File(appData(), "MineFlat" + File.separator + "errorlogs").exists())
-				new File(appData(), "MineFlat" + File.separator + "errorlogs").mkdir();
-			new File(appData(), "MineFlat" + File.separator +
+			if (!new File(appData(), FOLDER_NAME + File.separator + "errorlogs").exists())
+				new File(appData(), FOLDER_NAME + File.separator + "errorlogs").mkdir();
+			new File(appData(), FOLDER_NAME + File.separator +
 					"errorlogs" + File.separator + time + ".log").createNewFile();
 			System.out.println("Saved error log to " +
-					appData() + File.separator + "MineFlat" + File.separator +
+					appData() + File.separator + FOLDER_NAME + File.separator +
 					"errorlogs" + File.separator + time + ".log");
-			PrintWriter writer = new PrintWriter(appData() + File.separator + "MineFlat" +
+			PrintWriter writer = new PrintWriter(appData() + File.separator + FOLDER_NAME +
 					File.separator + "errorlogs" + File.separator + time + ".log", "UTF-8");
 			writer.print(log);
 			writer.close();
