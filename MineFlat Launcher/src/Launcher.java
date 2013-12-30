@@ -594,9 +594,13 @@ public class Launcher extends JPanel implements ActionListener {
 		else if (OS.contains("MAC"))
 			return System.getProperty("user.home") + "/Library/Application Support";
 		try {
-			return "/home/" + convertStreamToString(
+			String username = convertStreamToString(
 					Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", "echo $USER"})
 					.getInputStream(), false);
+			if (new File("/usr/home/" + username).exists())
+				return "/usr/home/" + username;
+			else
+				return "/home/" + username;
 		}
 		catch (Exception ex){
 			ex.printStackTrace();
