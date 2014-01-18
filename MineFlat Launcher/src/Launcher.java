@@ -265,7 +265,7 @@ public class Launcher extends JPanel implements ActionListener {
 								if (!slick.exists() || update){
 									progress = "Extracting Slick";
 									paintImmediately(0, 0, width, height);
-									unzip(zip, entry, jinput);
+									unzip(zip, entry, slick);
 								}
 								extracted.add("slick");
 							}
@@ -805,7 +805,7 @@ public class Launcher extends JPanel implements ActionListener {
 	}
 
 	public static void createExceptionLog(Exception ex){
-		createExceptionLog(ex.getMessage() + "\n" + ex.getStackTrace(), false);
+		createExceptionLog(ex, false);
 	}
 
 	public static void createExceptionLog(String s){
@@ -813,7 +813,10 @@ public class Launcher extends JPanel implements ActionListener {
 	}
 
 	public static void createExceptionLog(Exception ex, boolean gameThread){
-		createExceptionLog(ex.getMessage() + "\n" + ex.getStackTrace(), gameThread);
+		String trace = "";
+		for (StackTraceElement e : ex.getStackTrace())
+			trace += e.toString() + "\n";
+		createExceptionLog(ex.getMessage() + "\n" + trace, false);
 	}
 
 	public static void createExceptionLog(String s, boolean gameThread){
@@ -861,10 +864,11 @@ public class Launcher extends JPanel implements ActionListener {
 		log += NAME + " version: " + version + "\n";
 		log += "\n----------------BEGIN ERROR LOG----------------\n";
 		log += s;
-		log += "-----------------END ERROR LOG-----------------\n";
-		String time = cal.get(Calendar.HOUR_OF_DAY) + ":" + minute + ":" +
-				second + "_" + cal.get(Calendar.MONTH) + "-" +
-				cal.get(Calendar.DAY_OF_MONTH) + "-" + cal.get(Calendar.YEAR);
+		log += "\n-----------------END ERROR LOG-----------------\n";
+		String time = cal.get(Calendar.HOUR_OF_DAY) + "-" + minute + "-" +
+				second + "-" + cal.get(Calendar.MILLISECOND) + "_" +
+				cal.get(Calendar.MONTH) + "-" + cal.get(Calendar.DAY_OF_MONTH) +
+				"-" + cal.get(Calendar.YEAR);
 		try {
 			if (!new File(appData(), FOLDER_NAME + File.separator + "errorlogs").exists())
 				new File(appData(), FOLDER_NAME + File.separator + "errorlogs").mkdir();

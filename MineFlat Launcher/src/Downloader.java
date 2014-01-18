@@ -36,6 +36,7 @@ public class Downloader implements Runnable {
 		}
 		catch (Exception ex){
 			ex.printStackTrace();
+			Launcher.createExceptionLog(ex);
 			Launcher.progress = "Failed to download " + name;
 			Launcher.fail = "Errors occurred; see console for details";
 			new Launcher().repaint();
