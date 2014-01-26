@@ -852,12 +852,18 @@ public class Launcher extends JPanel implements ActionListener {
 			stage = "Failed to determine";
 			version = "Failed to determine";
 		}
-		String log = "----------------------\n"; // ASCII blocks like a boss
+		String log = "--";
+		for (int i = 0; i < NAME.length(); i++)
+			log += "-";
+		log += "------------\n"; // ASCII blocks like a boss
 		log += "| " + NAME.toUpperCase() + " ERROR LOG |\n";
-		log += "----------------------\n"; // #2fancy4u
+		log = "--";
+		for (int i = 0; i < NAME.length(); i++)
+			log += "-";
+		log += "------------\n"; // #3fancy5u
 		log += "Generated at " + cal.get(Calendar.HOUR_OF_DAY) + ":" +
 				minute + ":" + second + " on " +
-				cal.get(Calendar.MONTH) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "-" +
+				(cal.get(Calendar.MONTH) + 1) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "-" +
 				cal.get(Calendar.YEAR) + "\n";
 		log += "Exception occurred in game thread: " + gameThread + "\n";
 		log += NAME + " stage: " + stage + "\n";
@@ -865,10 +871,10 @@ public class Launcher extends JPanel implements ActionListener {
 		log += "\n----------------BEGIN ERROR LOG----------------\n";
 		log += s;
 		log += "\n-----------------END ERROR LOG-----------------\n";
-		String time = cal.get(Calendar.HOUR_OF_DAY) + "-" + minute + "-" +
-				second + "-" + cal.get(Calendar.MILLISECOND) + "_" +
-				cal.get(Calendar.MONTH) + "-" + cal.get(Calendar.DAY_OF_MONTH) +
-				"-" + cal.get(Calendar.YEAR);
+		String time = cal.get(Calendar.YEAR) + "-" +
+				(cal.get(Calendar.MONTH) + 1) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "_" +
+				cal.get(Calendar.HOUR_OF_DAY) + "-" + minute + "-" +
+				second + "-" + cal.get(Calendar.MILLISECOND);
 		try {
 			if (!new File(appData(), FOLDER_NAME + File.separator + "errorlogs").exists())
 				new File(appData(), FOLDER_NAME + File.separator + "errorlogs").mkdir();
