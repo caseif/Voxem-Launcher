@@ -813,13 +813,77 @@ public class Launcher extends JPanel implements ActionListener {
 	}
 
 	public static void createExceptionLog(Exception ex, boolean gameThread){
-		String trace = "";
-		for (StackTraceElement e : ex.getStackTrace())
-			trace += e.toString() + "\n";
-		createExceptionLog(ex.getMessage() + "\n" + trace, false);
+		Calendar cal = Calendar.getInstance();
+		String minute = cal.get(Calendar.MINUTE) + "";
+		if (minute.length() < 2)
+			minute = "0" + minute;
+		String second = cal.get(Calendar.SECOND) + "";
+		if (second.length() < 2)
+			second = "0" + second;
+		String time = cal.get(Calendar.YEAR) + "-" +
+				(cal.get(Calendar.MONTH) + 1) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "_" +
+				cal.get(Calendar.HOUR_OF_DAY) + "-" + minute + "-" +
+				second + "-" + cal.get(Calendar.MILLISECOND);
+		try {
+			if (!new File(appData(), FOLDER_NAME + File.separator + "errorlogs").exists())
+				new File(appData(), FOLDER_NAME + File.separator + "errorlogs").mkdir();
+			new File(appData(), FOLDER_NAME + File.separator +
+					"errorlogs" + File.separator + time + ".log").createNewFile();
+			System.out.println("Saved error log to " +
+					appData() + File.separator + FOLDER_NAME + File.separator +
+					"errorlogs" + File.separator + time + ".log");
+			PrintWriter writer = new PrintWriter(appData() + File.separator + FOLDER_NAME +
+					File.separator + "errorlogs" + File.separator + time + ".log", "UTF-8");
+			writer.print(getLogHeader(gameThread));
+			ex.printStackTrace(writer);
+			writer.print("-----------------END ERROR LOG-----------------\n");
+			writer.close();
+		}
+		catch (Exception exc){
+			// Well, shit.
+			exc.printStackTrace();
+			Launcher.progress = "An exception occurred while saving an exception log.";
+			Launcher.fail = "Errors occurred; see console for details.";
+		}
 	}
 
 	public static void createExceptionLog(String s, boolean gameThread){
+		String log = getLogHeader(gameThread);
+		log += s;
+		log += "\n-----------------END ERROR LOG-----------------\n";
+		Calendar cal = Calendar.getInstance();
+		String minute = cal.get(Calendar.MINUTE) + "";
+		if (minute.length() < 2)
+			minute = "0" + minute;
+		String second = cal.get(Calendar.SECOND) + "";
+		if (second.length() < 2)
+			second = "0" + second;
+		String time = cal.get(Calendar.YEAR) + "-" +
+				(cal.get(Calendar.MONTH) + 1) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "_" +
+				cal.get(Calendar.HOUR_OF_DAY) + "-" + minute + "-" +
+				second + "-" + cal.get(Calendar.MILLISECOND);
+		try {
+			if (!new File(appData(), FOLDER_NAME + File.separator + "errorlogs").exists())
+				new File(appData(), FOLDER_NAME + File.separator + "errorlogs").mkdir();
+			new File(appData(), FOLDER_NAME + File.separator +
+					"errorlogs" + File.separator + time + ".log").createNewFile();
+			System.out.println("Saved error log to " +
+					appData() + File.separator + FOLDER_NAME + File.separator +
+					"errorlogs" + File.separator + time + ".log");
+			PrintWriter writer = new PrintWriter(appData() + File.separator + FOLDER_NAME +
+					File.separator + "errorlogs" + File.separator + time + ".log", "UTF-8");
+			writer.print(log);
+			writer.close();
+		}
+		catch (Exception ex){
+			// Well, shit.
+			ex.printStackTrace();
+			Launcher.progress = "An exception occurred while saving an exception log.";
+			Launcher.fail = "Errors occurred; see console for details.";
+		}
+	}
+	
+	public static String getLogHeader(boolean gameThread){
 		Calendar cal = Calendar.getInstance();
 		String minute = cal.get(Calendar.MINUTE) + "";
 		if (minute.length() < 2)
@@ -869,30 +933,6 @@ public class Launcher extends JPanel implements ActionListener {
 		log += NAME + " stage: " + stage + "\n";
 		log += NAME + " version: " + version + "\n";
 		log += "\n----------------BEGIN ERROR LOG----------------\n";
-		log += s;
-		log += "\n-----------------END ERROR LOG-----------------\n";
-		String time = cal.get(Calendar.YEAR) + "-" +
-				(cal.get(Calendar.MONTH) + 1) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "_" +
-				cal.get(Calendar.HOUR_OF_DAY) + "-" + minute + "-" +
-				second + "-" + cal.get(Calendar.MILLISECOND);
-		try {
-			if (!new File(appData(), FOLDER_NAME + File.separator + "errorlogs").exists())
-				new File(appData(), FOLDER_NAME + File.separator + "errorlogs").mkdir();
-			new File(appData(), FOLDER_NAME + File.separator +
-					"errorlogs" + File.separator + time + ".log").createNewFile();
-			System.out.println("Saved error log to " +
-					appData() + File.separator + FOLDER_NAME + File.separator +
-					"errorlogs" + File.separator + time + ".log");
-			PrintWriter writer = new PrintWriter(appData() + File.separator + FOLDER_NAME +
-					File.separator + "errorlogs" + File.separator + time + ".log", "UTF-8");
-			writer.print(log);
-			writer.close();
-		}
-		catch (Exception ex){
-			// Well, shit.
-			ex.printStackTrace();
-			Launcher.progress = "An exception occurred while saving an exception log.";
-			Launcher.fail = "Errors occurred; see console for details.";
-		}
+		return log;
 	}
 }
