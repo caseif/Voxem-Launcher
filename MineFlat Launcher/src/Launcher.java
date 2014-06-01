@@ -156,7 +156,7 @@ public class Launcher extends JPanel implements ActionListener {
 			dir.mkdir();
 			try {
 				JSONArray files =
-						(JSONArray)((JSONObject)new JSONParser().parse(new InputStreamReader(new URL(JSON_LOCATION).openStream()))).get("files");
+						(JSONArray)((JSONObject)new JSONParser().parse(new InputStreamReader(new URL(JSON_LOCATION).openStream()))).get("resources");
 				List<String> paths = new ArrayList<String>();
 				for (Object obj : files){
 					JSONObject jFile = (JSONObject)obj;

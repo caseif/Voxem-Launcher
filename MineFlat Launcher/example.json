@@ -1,5 +1,5 @@
 {
-	"files": [
+	"resources": [
 		{
 			"id": "LWJGL",
 			"location": "http://downloads.sourceforge.net/project/java-game-lib/Official%20Releases/LWJGL%202.9.1/lwjgl-2.9.1.zip",
