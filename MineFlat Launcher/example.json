@@ -1,0 +1,48 @@
+{
+	"files": [
+		{
+			"id": "LWJGL",
+			"location": "http://downloads.sourceforge.net/project/java-game-lib/Official%20Releases/LWJGL%202.9.1/lwjgl-2.9.1.zip",
+			"localPath": "lwjgl.zip",
+			"md5": "6dbb92aa4ff5b0a4bfe83daeacead75c",
+			"extract": [
+				{
+					"id": "LWJGL core",
+					"path": "lwjgl-2.9.1/jar/lwjgl.jar",
+					"localPath": "lwjgl.jar",
+					"md5": "71dad15991e937f14ba6e412aef5debf"
+				},
+				{
+					"id": "LWJGL util",
+					"path": "lwjgl-2.9.1/jar/lwjgl_util.jar",
+					"localPath": "lwjgl_util.jar",
+					"md5": "6dbb92aa4ff5b0a4bfe83daeacead75c"
+				},
+				{
+					"id": "JInput",
+					"path": "lwjgl-2.9.1/jar/jinput.jar",
+					"localPath": "jinput.jar",
+					"md5": "d62ff8cd9539a32dac094c00e820e9e6"
+				},
+				{
+					"id": "natives",
+					"path": "lwjgl-2.9.1/native/",
+					"localPath": "native"
+				}
+			]
+		},
+		{
+			"id": "MineFlat",
+			"location": "http://amigocraft.net/mineflat/serve.php",
+			"localPath": "mineflat.jar",
+			"md5": "8520fed54960e00ffc5156ee7f90146c",
+			"launch": "true"
+		},
+		{
+			"id": "version file",
+			"location": "http://amigocraft.net/mineflat/version",
+			"localPath": "version",
+			"md5": "c26190249234a7e4ed203614e9e89c2e"
+		}
+	]
+}
