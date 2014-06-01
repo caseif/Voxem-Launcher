@@ -155,8 +155,13 @@ public class Launcher extends JPanel implements ActionListener {
 				dir = new File(downloadDir, FOLDER_NAME + File.separator + "resources");
 			dir.mkdir();
 			try {
-				JSONArray files =
-						(JSONArray)((JSONObject)new JSONParser().parse(new InputStreamReader(new URL(JSON_LOCATION).openStream()))).get("resources");
+				progress = "Downloading JSON filelist...";
+				Downloader jsonDl = new Downloader(new URL(JSON_LOCATION), dir.getPath() + File.separator + "resources.json", "JSON filelist");
+				Thread jsonT = new Thread(jsonDl);
+				jsonT.start();
+				while (jsonT.isAlive()){}
+				JSONArray files = (JSONArray)((JSONObject)new JSONParser().parse(
+						new InputStreamReader(new File(dir.getPath(), "resources.json").toURI().toURL().openStream()))).get("resources");
 				List<String> paths = new ArrayList<String>();
 				for (Object obj : files){
 					JSONObject jFile = (JSONObject)obj;
@@ -273,7 +278,7 @@ public class Launcher extends JPanel implements ActionListener {
 			catch (Exception ex){
 				ex.printStackTrace();
 				createExceptionLog(ex);
-				progress = "Failed to read JSON file list";
+				progress = "Failed to read JSON filelist";
 				fail = "Errors occurred; see log file for details";
 				launcher.paintImmediately(0, 0, width, height);
 			}
