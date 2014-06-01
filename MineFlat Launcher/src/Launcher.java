@@ -166,12 +166,12 @@ public class Launcher extends JPanel implements ActionListener {
 					paths.add((String)jFile.get("localPath"));
 					File file = new File(dir, ((String)jFile.get("localPath")).replace("/", File.separator));
 					boolean reacquire = false;
-					if (!file.exists() || update || !(jFile.get("md5").equals(md5(file.getPath())))){
+					if (!file.exists() || update || !jFile.get("md5").equals(md5(file.getPath()))){
 						reacquire = true;
 						if (update)
 							System.out.println("Update forced, so file " + (String)jFile.get("localPath") + " must be updated");
 						else
-							System.out.println("MD5 checksum for file " + (String)jFile.get("localPath") + " does not match expected value.");
+							System.out.println("MD5 checksum for file " + (String)jFile.get("localPath") + " does not match expected value");
 						System.out.println("Attempting to reacquire...");
 						file.delete();
 						file.getParentFile().mkdirs();
@@ -200,15 +200,18 @@ public class Launcher extends JPanel implements ActionListener {
 							}
 							paintImmediately(0, 0, width, height);
 						}
+						eSize = -1;
+						aSize = -1;
 					}
 					if (jFile.containsKey("extract")){
 						HashMap<String, JSONObject> elements = new HashMap<String, JSONObject>();
 						for (Object ex : (JSONArray)jFile.get("extract")){
 							elements.put((String)((JSONObject)ex).get("path"), (JSONObject)ex);
 							paths.add((String)((JSONObject)ex).get("localPath"));
-							File f = new File(dir, ((String)((JSONObject)ex).get("localPath")).replace("/", File.separator));
-							if ((!f.exists() && !f.isDirectory()) ||
-									(!f.isDirectory() && !md5(f.getPath()).equals(((String)((JSONObject)ex).get("md5")))))
+							File f = new File(dir, ((String)((JSONObject)ex).get("localPath")).replace("/", File.separator));;
+							if (!f.exists() ||
+									(!f.isDirectory() && ((JSONObject)ex).get("md5") != null &&
+									!md5(f.getPath()).equals(((String)((JSONObject)ex).get("md5")))))
 								reacquire = true;
 							if (((JSONObject)ex).get("id").equals("natives"))
 								natives = new File(dir, ((String)((JSONObject)ex).get("localPath")).replace("/", File.separator));
