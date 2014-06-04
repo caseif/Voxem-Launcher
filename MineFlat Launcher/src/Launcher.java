@@ -460,10 +460,12 @@ public class Launcher extends JPanel implements ActionListener {
 		progress = "Launching";
 		paintImmediately(0, 0, width, height);
 		try {
-			InputStream errStream = Runtime.getRuntime().exec(
-					new String[]{"java", "-Djava.library.path=" +
-							natives, "-jar", main.getPath()}, null,
-							main.getParentFile()).getErrorStream();
+			Process p = Runtime.getRuntime().exec(
+					new String[]{"java", "-Djava.library.path=" + natives, "-jar", main.getPath()}, null, main.getParentFile());
+			InputStream errStream = p.getErrorStream();
+			BufferedInputStream in = new BufferedInputStream(p.getInputStream());
+			byte[] bytes = new byte[4096];
+			while (in.read(bytes) != -1){}
 			String errors = convertStreamToString(errStream, true).replaceAll("\\s+","");
 			if (errors.isEmpty())
 				pullThePlug();
@@ -699,7 +701,7 @@ public class Launcher extends JPanel implements ActionListener {
 				md.update(dataBytes, 0, nread);
 			}
 			fis.close();
-			
+
 			byte[] mdbytes = md.digest();
 
 			StringBuffer sb = new StringBuffer();
