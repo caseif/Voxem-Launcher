@@ -168,7 +168,7 @@ public class Launcher extends JPanel implements ActionListener {
 					String launch = ((String)jFile.get("launch"));
 					if (launch != null && launch.equals("true"))
 						main = new File(dir, ((String)jFile.get("localPath")).replace("/", File.separator));
-					paths.add((String)jFile.get("localPath"));
+					paths.add(((String)jFile.get("localPath")).replace("/", File.separator));
 					File file = new File(dir, ((String)jFile.get("localPath")).replace("/", File.separator));
 					boolean reacquire = false;
 					if (!file.exists() || update || !jFile.get("md5").equals(md5(file.getPath()))){
@@ -189,6 +189,8 @@ public class Launcher extends JPanel implements ActionListener {
 						Thread th = new Thread(dl);
 						th.start();
 						eSize = getFileSize(new URL((String)jFile.get("location"))) / 8;
+						speed = 0;
+						lastSize = 0;
 						while (th.isAlive()){
 							aSize = file.length() / 8;
 							if (lastTime != -1){
@@ -212,7 +214,7 @@ public class Launcher extends JPanel implements ActionListener {
 						HashMap<String, JSONObject> elements = new HashMap<String, JSONObject>();
 						for (Object ex : (JSONArray)jFile.get("extract")){
 							elements.put((String)((JSONObject)ex).get("path"), (JSONObject)ex);
-							paths.add((String)((JSONObject)ex).get("localPath"));
+							paths.add(((String)((JSONObject)ex).get("localPath")).replace("/", File.separator));
 							File f = new File(dir, ((String)((JSONObject)ex).get("localPath")).replace("/", File.separator));;
 							if (!f.exists() ||
 									(!f.isDirectory() && ((JSONObject)ex).get("md5") != null &&
@@ -272,8 +274,11 @@ public class Launcher extends JPanel implements ActionListener {
 						}
 					}
 				}
+				
+				for (String s : paths)
+					System.out.println(s);
 
-				checkFile(dir, paths);
+				checkFile(dir, dir, paths);
 			}
 			catch (Exception ex){
 				ex.printStackTrace();
@@ -680,13 +685,14 @@ public class Launcher extends JPanel implements ActionListener {
 		return log;
 	}
 
-	public static void checkFile(File file, List<String> allowed){
+	public static void checkFile(File dir, File file, List<String> allowed){
+		System.out.println(file.getPath().replace(dir.getPath() + File.separator, ""));
 		if (file.isDirectory()){
-			if (!allowed.contains(file.getName()))
+			if (!allowed.contains(file.getPath().replace(dir.getPath() + File.separator, "")))
 				for (File f : file.listFiles())
-					checkFile(f, allowed);
+					checkFile(dir, f, allowed);
 		}
-		else if (!allowed.contains(file.getName()))
+		else if (!allowed.contains(file.getPath().replace(dir.getPath() + File.separator, "")))
 			file.delete();
 	}
 
