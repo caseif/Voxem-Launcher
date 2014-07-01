@@ -274,9 +274,6 @@ public class Launcher extends JPanel implements ActionListener {
 						}
 					}
 				}
-				
-				for (String s : paths)
-					System.out.println(s);
 
 				checkFile(dir, dir, paths);
 			}
