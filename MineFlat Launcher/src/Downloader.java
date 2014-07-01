@@ -29,6 +29,7 @@ public class Downloader implements Runnable {
 			File file = new File(fileName);
 			file.setReadable(true, false);
 			file.setWritable(true, false);
+			file.getParentFile().mkdirs();
 			file.createNewFile();
 			FileOutputStream os = new FileOutputStream(fileName);
 			os.getChannel().transferFrom(rbc, 0, Launcher.getFileSize(url));
