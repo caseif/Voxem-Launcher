@@ -1,3 +1,4 @@
+package com.headswilllol.basiclauncher;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -13,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -37,6 +39,7 @@ import javax.swing.SwingUtilities;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * 
@@ -50,34 +53,25 @@ import org.json.simple.parser.JSONParser;
 
 public class Launcher extends JPanel implements ActionListener {
 
-	/**
-	 * The name of the program to be launched
-	 */
-	public static final String 	NAME = "MineFlat";
+	private static final long serialVersionUID = -684273231385024732L;
 
-	/**
-	 * The name of the program's folder in the application data directory
-	 */
-	public static final String 	FOLDER_NAME = ".mineflat";
+	public static String NAME;
 
-	/**
-	 * The URL to fetch the JSON configuration from
-	 */
-	public static final String JSON_LOCATION = "http://amigocraft.net/mineflat/resources.json";
+	public static String FOLDER_NAME;
+
+	public static String JSON_LOCATION;
 
 	/**
 	 * The rate in milliseconds at which to update the download speed
 	 */
-	public static final int		SPEED_UPDATE_INTERVAL = 500;
+	public static final int SPEED_UPDATE_INTERVAL = 500;
 
 	/**
 	 * If a download directory is specified, it will be stored here.
 	 */
 	public static String downloadDir = "";
 
-	private static Launcher launcher; // standard workaround for static methods
-
-	private static final long serialVersionUID = 1L;
+	private static Launcher launcher;
 
 	public static JFrame f; // need I explain this?
 
@@ -334,6 +328,28 @@ public class Launcher extends JPanel implements ActionListener {
 			}
 			i += 1;
 		}
+		try {
+			JSONObject info = ((JSONObject)new JSONParser().parse(
+					new InputStreamReader(Launcher.class.getResourceAsStream("/gameinfo.json"))));
+			NAME = (String)info.get("name");
+			FOLDER_NAME = "." + NAME.toLowerCase();
+			JSON_LOCATION = (String)info.get("resource-info");
+		}
+		catch (IOException ex){
+			ex.printStackTrace();
+			progress = "Failed to retrieve program information!";
+			fail = "Errors occurred; see log for details";
+			createExceptionLog(ex);
+			launcher.paintImmediately(0, 0, width, height);
+		}
+		catch (ParseException ex){
+			ex.printStackTrace();
+			progress = "Failed to retrieve program information!";
+			fail = "Errors occurred; see log for details";
+			createExceptionLog(ex);
+			launcher.paintImmediately(0, 0, width, height);
+		}
+		
 		SwingUtilities.invokeLater(new Runnable(){
 			public void run(){
 				createAndShowGUI();
@@ -468,7 +484,7 @@ public class Launcher extends JPanel implements ActionListener {
 			BufferedInputStream in = new BufferedInputStream(p.getInputStream());
 			byte[] bytes = new byte[4096];
 			while (in.read(bytes) != -1){}
-			String errors = convertStreamToString(errStream, true).replaceAll("\\s+","");
+			String errors = convertStreamToString(errStream, true);
 			if (errors.isEmpty())
 				pullThePlug();
 			else {

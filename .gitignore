@@ -1,10 +1,4 @@
-MineFlat Launcher/.classpath
-MineFlat Launcher/.project
-MineFlat Launcher/.settings/org.eclipse.jdt.core.prefs
-MineFlat Launcher/bin/Downloader.class
-MineFlat Launcher/bin/LICENSE
-MineFlat Launcher/bin/Launcher$1.class
-MineFlat Launcher/bin/Launcher.class
-MineFlat Launcher/bin/images/icon.png
-MineFlat Launcher/bin/webscripts/connect.php
-MineFlat Launcher/bin/webscripts/serve.php
+/bin
+/.settings
+/MineFlat Launcher.iml
+/target
