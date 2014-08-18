@@ -108,8 +108,9 @@ public class ItemList {
 	
 	/**
 	 * @param i 0-based
-	 * @return
+	 * @return 
 	 */
+	@SuppressWarnings("javadoc")
 	public String get(int i){
 		return (String)items.get(i);
 	}

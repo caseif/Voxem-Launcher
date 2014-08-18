@@ -1,4 +1,5 @@
 package com.headswilllol.basiclauncher;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -14,7 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -39,15 +39,17 @@ import javax.swing.SwingUtilities;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 /**
  * 
  * @author Maxim Roncacé
+ * 
+ * @License
  * THIS SOFTWARE IS LICENSED UNDER THE GNU GENERAL PUBLIC LICENSE VERSION 3, AND AS SUCH,
  * ALL DERIVATIVES MUST BE RELEASED UNDER THE SAME LICENSE. THE FULL LICENSE TEXT MAY BE
  * VIEWED IN THE FILE ENTITLED "LICENSE" IN THE ROOT DIRECTORY OF THIS JAR. THIS LICENSE
- * FILE MUST BE INCLUDED IN ALL DERIVATIVES OF THIS SOFTWARE.
+ * FILE MUST BE INCLUDED IN ALL DERIVATIVES OF THIS SOFTWARE. ADDITIONALLY, ALL "AUTHOR"
+ * ANNOTATIONS MUST BE LEFT AS IS.
  *
  */
 
@@ -73,9 +75,9 @@ public class Launcher extends JPanel implements ActionListener {
 
 	private static Launcher launcher;
 
-	public static JFrame f; // need I explain this?
+	public static JFrame f;
 
-	protected JButton play, force, quit, updateYes, updateNo; // or this?
+	protected JButton play, force, quit, updateYes, updateNo;
 
 	// maps OS string to library extension (e.g. .dll, .so, whatever ridiculous string it is for Mac)
 	public static HashMap<String, String> osExt = new HashMap<String, String>();
@@ -149,23 +151,26 @@ public class Launcher extends JPanel implements ActionListener {
 				dir = new File(downloadDir, FOLDER_NAME + File.separator + "resources");
 			dir.mkdir();
 			try {
-				progress = "Downloading JSON filelist...";
-				Downloader jsonDl = new Downloader(new URL(JSON_LOCATION), dir.getPath() + File.separator + "resources.json", "JSON filelist");
-				Thread jsonT = new Thread(jsonDl);
+				progress = "Downloading JSON file list...";
+				paintImmediately(0, 0, width, height);
+				Downloader jsonDl = new Downloader(new URL(JSON_LOCATION), dir.getPath() + File.separator + "resources.json", "JSON file list");
+				Thread jsonT = new Thread(jsonDl); // download in a separate thread so the GUI will continue to update
 				jsonT.start();
-				while (jsonT.isAlive()){}
+				while (jsonT.isAlive()){} // no need for a progress bar; it's tiny
 				JSONArray files = (JSONArray)((JSONObject)new JSONParser().parse(
 						new InputStreamReader(new File(dir.getPath(), "resources.json").toURI().toURL().openStream()))).get("resources");
 				List<String> paths = new ArrayList<String>();
-				for (Object obj : files){
+				for (Object obj : files){ // iterate the entries in the JSON file
 					JSONObject jFile = (JSONObject)obj;
-					String launch = ((String)jFile.get("launch"));
+					String launch = ((String)jFile.get("launch")); // if true, the resource will be used as the main binary
 					if (launch != null && launch.equals("true"))
 						main = new File(dir, ((String)jFile.get("localPath")).replace("/", File.separator));
 					paths.add(((String)jFile.get("localPath")).replace("/", File.separator));
 					File file = new File(dir, ((String)jFile.get("localPath")).replace("/", File.separator));
 					boolean reacquire = false;
-					if (!file.exists() || update || !jFile.get("md5").equals(md5(file.getPath()))){
+					if (!file.exists() || // files doesn't exist
+							update || // update forced
+							!jFile.get("md5").equals(md5(file.getPath()))){ // mismatch between local and remote file
 						reacquire = true;
 						if (update)
 							System.out.println("Update forced, so file " + (String)jFile.get("localPath") + " must be updated");
@@ -175,46 +180,46 @@ public class Launcher extends JPanel implements ActionListener {
 						file.delete();
 						file.getParentFile().mkdirs();
 						file.createNewFile();
-						progress = "Downloading " + (String)jFile.get("id");
+						progress = "Downloading " + (String)jFile.get("id"); // update the GUI
 						paintImmediately(0, 0, width, height);
 						Downloader dl = new Downloader(new URL((String)jFile.get("location")),
 								dir + File.separator + ((String)jFile.get("localPath")).replace("/", File.separator),
 								(String)jFile.get("id"));
 						Thread th = new Thread(dl);
 						th.start();
-						eSize = getFileSize(new URL((String)jFile.get("location"))) / 8;
-						speed = 0;
-						lastSize = 0;
-						while (th.isAlive()){
+						eSize = getFileSize(new URL((String)jFile.get("location"))) / 8; // expected file size
+						speed = 0; // stores the current download speed
+						lastSize = 0; // stores the size of the downloaded file the last time the GUI was updated
+						while (th.isAlive()){ // wait but don't hang the main thread
 							aSize = file.length() / 8;
 							if (lastTime != -1){
-								if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){
+								if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){ // wait so the GUI isn't constantly updating
 									speed = ((aSize - lastSize) / 1000) /
-											((System.currentTimeMillis() - lastTime) / 1000);
+											((System.currentTimeMillis() - lastTime) / 1000); // calculate the new download speed
 									lastTime = System.currentTimeMillis();
-									lastSize = aSize;
+									lastSize = aSize; // update the downloaded file's size
 								}
 							}
 							else {
-								speed = 0;
-								lastTime = System.currentTimeMillis();
+								speed = 0; // reset the download speed
+								lastTime = System.currentTimeMillis(); // and the last time
 							}
 							paintImmediately(0, 0, width, height);
 						}
 						eSize = -1;
 						aSize = -1;
 					}
-					if (jFile.containsKey("extract")){
+					if (jFile.containsKey("extract")){ // file should be unzipped
 						HashMap<String, JSONObject> elements = new HashMap<String, JSONObject>();
 						for (Object ex : (JSONArray)jFile.get("extract")){
 							elements.put((String)((JSONObject)ex).get("path"), (JSONObject)ex);
 							paths.add(((String)((JSONObject)ex).get("localPath")).replace("/", File.separator));
 							File f = new File(dir, ((String)((JSONObject)ex).get("localPath")).replace("/", File.separator));;
-							if (!f.exists() ||
-									(!f.isDirectory() && ((JSONObject)ex).get("md5") != null &&
-									!md5(f.getPath()).equals(((String)((JSONObject)ex).get("md5")))))
+							if (!f.exists() || // file doesn't exist
+									(!f.isDirectory() && ((JSONObject)ex).get("md5") != null && // file isn't directory and has checksum
+									!md5(f.getPath()).equals(((String)((JSONObject)ex).get("md5"))))) // mismatch between local and remote file
 								reacquire = true;
-							if (((JSONObject)ex).get("id").equals("natives"))
+							if (((JSONObject)ex).get("id").equals("natives")) // specific to LWJGL launching
 								natives = new File(dir, ((String)((JSONObject)ex).get("localPath")).replace("/", File.separator));
 						}
 						if (reacquire){
@@ -223,11 +228,11 @@ public class Launcher extends JPanel implements ActionListener {
 								@SuppressWarnings("rawtypes")
 								Enumeration en = zip.entries();
 								List<String> dirs = new ArrayList<String>();
-								while (en.hasMoreElements()){
+								while (en.hasMoreElements()){ // iterate entries in ZIP file
 									ZipEntry entry = (ZipEntry)en.nextElement();
-									boolean extract = false;
+									boolean extract = false; // whether the entry should be extracted
 									String parentDir = "";
-									if (elements.containsKey(entry.getName()))
+									if (elements.containsKey(entry.getName())) // entry is in list of files to extract
 										extract = true;
 									else
 										for (String d : dirs)
@@ -239,7 +244,7 @@ public class Launcher extends JPanel implements ActionListener {
 										progress = "Extracting " + (elements.containsKey(entry.getName()) ?
 												elements.get(entry.getName()).get("id") :
 													entry.getName().substring(entry.getName().indexOf(parentDir),
-															entry.getName().length()).replace("/", File.separator));
+															entry.getName().length()).replace("/", File.separator)); // update the GUI
 										paintImmediately(0, 0, width, height);
 										if (entry.isDirectory()){
 											if (parentDir.equals(""))
@@ -250,10 +255,10 @@ public class Launcher extends JPanel implements ActionListener {
 													((String)elements.get(entry.getName()).get("localPath")).replace("/", File.separator) :
 														entry.getName().substring(entry.getName().indexOf(parentDir),
 																entry.getName().length()).replace("/", File.separator)
-													);
+													); // path to extract to
 											if (path.exists())
 												path.delete();
-											unzip(zip, entry, path);
+											unzip(zip, entry, path); // *zziiiip*
 										}
 									}
 								}
@@ -271,10 +276,10 @@ public class Launcher extends JPanel implements ActionListener {
 
 				checkFile(dir, dir, paths);
 			}
-			catch (Exception ex){
+			catch (Exception ex){ // can't open resource list
 				ex.printStackTrace();
 				createExceptionLog(ex);
-				progress = "Failed to read JSON filelist";
+				progress = "Failed to read JSON file list";
 				fail = "Errors occurred; see log file for details";
 				launcher.paintImmediately(0, 0, width, height);
 			}
@@ -335,21 +340,14 @@ public class Launcher extends JPanel implements ActionListener {
 			FOLDER_NAME = "." + NAME.toLowerCase();
 			JSON_LOCATION = (String)info.get("resource-info");
 		}
-		catch (IOException ex){
+		catch (Exception ex){
 			ex.printStackTrace();
 			progress = "Failed to retrieve program information!";
 			fail = "Errors occurred; see log for details";
 			createExceptionLog(ex);
 			launcher.paintImmediately(0, 0, width, height);
 		}
-		catch (ParseException ex){
-			ex.printStackTrace();
-			progress = "Failed to retrieve program information!";
-			fail = "Errors occurred; see log for details";
-			createExceptionLog(ex);
-			launcher.paintImmediately(0, 0, width, height);
-		}
-		
+
 		SwingUtilities.invokeLater(new Runnable(){
 			public void run(){
 				createAndShowGUI();
@@ -416,26 +414,12 @@ public class Launcher extends JPanel implements ActionListener {
 		if (OS.contains("WIN"))
 			return System.getenv("APPDATA");
 		else if (OS.contains("MAC"))
-			return System.getProperty("user.home") + "/Library/Application Support";
-		try {
-			String username = convertStreamToString(
-					Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", "echo $USER"})
-					.getInputStream(), false);
-			if (new File("/usr/home/" + username).exists())
-				return "/usr/home/" + username;
-			else
-				return "/home/" + username;
-		}
-		catch (Exception ex){
-			ex.printStackTrace();
-			progress = "Failed to get home directory";
-			fail = "Errors occurred; see console for details";
-			launcher.paintImmediately(0, 0, width, height);
-		}
-		return System.getProperty("user.dir");
+			return System.getProperty("user.home") + "/.Library/Application Support"; // I think this is where it should go
+		else
+			return System.getProperty("user.home") + "/.minecraft"; // apparently this pisses some people off, but oh well :P
 	}
 
-	public static void unzip(ZipFile zip, ZipEntry entry, File dest){
+	public static void unzip(ZipFile zip, ZipEntry entry, File dest){ // convenience method for unzipping files from an archive
 		if (dest.exists())
 			dest.delete();
 		dest.getParentFile().mkdirs();
@@ -461,7 +445,7 @@ public class Launcher extends JPanel implements ActionListener {
 	}
 
 	private void launch(){
-		if (main == null){
+		if (main == null){ // no main resource specified
 			progress = "Failed to find launch candidate!";
 			paintImmediately(0, 0, width, height);
 			return;
@@ -479,11 +463,11 @@ public class Launcher extends JPanel implements ActionListener {
 		paintImmediately(0, 0, width, height);
 		try {
 			Process p = Runtime.getRuntime().exec(
-					new String[]{"java", "-Djava.library.path=" + natives, "-jar", main.getPath()}, null, main.getParentFile());
-			InputStream errStream = p.getErrorStream();
+					new String[]{"java", "-Djava.library.path=" + natives, "-jar", main.getPath()}, null, main.getParentFile()); // launch main binary
+			InputStream errStream = p.getErrorStream(); // read error stream so errors can be reported and logged
 			BufferedInputStream in = new BufferedInputStream(p.getInputStream());
 			byte[] bytes = new byte[4096];
-			while (in.read(bytes) != -1){}
+			while (in.read(bytes) != -1){} // this is a horrible idea. never do this.
 			String errors = convertStreamToString(errStream, true);
 			if (errors.isEmpty())
 				pullThePlug();
@@ -508,7 +492,7 @@ public class Launcher extends JPanel implements ActionListener {
 		HttpURLConnection conn = null;
 		try {
 			conn = (HttpURLConnection)url.openConnection();
-			conn.setRequestMethod("HEAD");
+			conn.setRequestMethod("HEAD"); // joke's on you if the server doesn't specify
 			conn.getInputStream();
 			return conn.getContentLength();
 		}
@@ -550,7 +534,7 @@ public class Launcher extends JPanel implements ActionListener {
 			ex.printStackTrace();
 			//createExceptionLog(); // I'm leaving this here as a lesson to my future self.
 			progress = "Failed to get output from launch command";
-			fail = "Errors occurred; see log file for details";
+			fail = "Errors occurred; see console for details";
 			launcher.paintImmediately(0, 0, width, height);
 		}
 		finally {
@@ -577,11 +561,9 @@ public class Launcher extends JPanel implements ActionListener {
 	public static void createExceptionLog(Exception ex, boolean gameThread){
 		Calendar cal = Calendar.getInstance();
 		String minute = cal.get(Calendar.MINUTE) + "";
-		if (minute.length() < 2)
-			minute = "0" + minute;
+		minute = (minute.length() < 2 ? "0" : "") + minute;
 		String second = cal.get(Calendar.SECOND) + "";
-		if (second.length() < 2)
-			second = "0" + second;
+		second = (second.length() < 2 ? "0" : "") + second;
 		String time = cal.get(Calendar.YEAR) + "-" +
 				(cal.get(Calendar.MONTH) + 1) + "-" + cal.get(Calendar.DAY_OF_MONTH) + "_" +
 				cal.get(Calendar.HOUR_OF_DAY) + "-" + minute + "-" +
@@ -709,7 +691,7 @@ public class Launcher extends JPanel implements ActionListener {
 			file.delete();
 	}
 
-	public static String md5(String path){
+	public static String md5(String path){ // convenience method for calculating MD5 hash of a file
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 			FileInputStream fis = new FileInputStream(path);
@@ -724,9 +706,9 @@ public class Launcher extends JPanel implements ActionListener {
 			byte[] mdbytes = md.digest();
 
 			StringBuffer sb = new StringBuffer();
-			for (int i=0;i<mdbytes.length;i++) {
-				String hex=Integer.toHexString(0xff & mdbytes[i]);
-				if(hex.length()==1)
+			for (int i = 0; i < mdbytes.length; i++){
+				String hex = Integer.toHexString(0xff & mdbytes[i]);
+				if(hex.length() == 1)
 					sb.append('0');
 				sb.append(hex);
 			}

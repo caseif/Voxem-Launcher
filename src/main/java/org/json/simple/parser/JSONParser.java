@@ -57,8 +57,6 @@ public class JSONParser {
      * Reset the parser to the initial state with a new character reader.
      * 
      * @param in - The new character reader.
-     * @throws IOException
-     * @throws ParseException
      */
 	public void reset(Reader in){
 		lexer.yyreset(in);

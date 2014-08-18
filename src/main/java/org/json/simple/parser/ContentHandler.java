@@ -17,6 +17,7 @@ public interface ContentHandler {
      * 
 	 * @throws ParseException 
 	 * 			- JSONParser will stop and throw the same exception to the caller when receiving this exception.
+	 * @throws IOException 
 	 */
 	void startJSON() throws ParseException, IOException;
 	
@@ -24,6 +25,7 @@ public interface ContentHandler {
 	 * Receive notification of the end of JSON processing.
 	 * 
 	 * @throws ParseException
+	 * @throws IOException 
 	 */
 	void endJSON() throws ParseException, IOException;
 	
@@ -33,6 +35,7 @@ public interface ContentHandler {
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
      *          - JSONParser will stop and throw the same exception to the caller when receiving this exception.
+	 * @throws IOException 
      * @see #endJSON
 	 */
 	boolean startObject() throws ParseException, IOException;
@@ -42,6 +45,7 @@ public interface ContentHandler {
 	 * 
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
+	 * @throws IOException 
      * 
      * @see #startObject
 	 */
@@ -54,6 +58,7 @@ public interface ContentHandler {
 	 * 
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
+	 * @throws IOException 
      * 
      * @see #endObjectEntry
 	 */
@@ -64,6 +69,7 @@ public interface ContentHandler {
 	 * 
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
+	 * @throws IOException 
      * 
      * @see #startObjectEntry
 	 */
@@ -74,6 +80,7 @@ public interface ContentHandler {
 	 * 
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
+	 * @throws IOException 
      * 
      * @see #endArray
 	 */
@@ -84,6 +91,7 @@ public interface ContentHandler {
 	 * 
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
+	 * @throws IOException 
      * 
      * @see #startArray
 	 */
@@ -104,6 +112,7 @@ public interface ContentHandler {
 	 * 
 	 * @return false if the handler wants to stop parsing after return.
 	 * @throws ParseException
+	 * @throws IOException 
 	 */
 	boolean primitive(Object value) throws ParseException, IOException;
 		

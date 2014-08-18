@@ -28,6 +28,7 @@ public class JSONArray extends ArrayList implements List, JSONAware, JSONStreamA
      * 
      * @param list
      * @param out
+     * @throws IOException 
      */
 	public static void writeJSONString(List list, Writer out) throws IOException{
 		if(list == null){

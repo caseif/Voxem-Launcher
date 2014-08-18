@@ -27,6 +27,7 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
      * 
      * @param map
      * @param out
+     * @throws IOException 
      */
 	public static void writeJSONString(Map map, Writer out) throws IOException {
 		if(map == null){
@@ -122,7 +123,7 @@ public class JSONObject extends HashMap implements Map, JSONAware, JSONStreamAwa
 	 * @see org.json.simple.JSONValue#escape(String)
 	 * 
 	 * @param s
-	 * @return
+	 * @return the escaped string.
 	 */
 	public static String escape(String s){
 		return JSONValue.escape(s);
