@@ -1,4 +1,5 @@
-bin
-.settings
-MineFlat Launcher.iml
-target
+.idea/
+.settings/
+bin/
+*.iml
+target/

@@ -3,6 +3,7 @@
 		{
 			"id": "LWJGL",
 			"location": "http://downloads.sourceforge.net/project/java-game-lib/Official%20Releases/LWJGL%202.9.1/lwjgl-2.9.1.zip",
+			"doNotSpoofUserAgent": "true",
 			"localPath": "lwjgl.zip",
 			"md5": "6dbb92aa4ff5b0a4bfe83daeacead75c",
 			"extract": [

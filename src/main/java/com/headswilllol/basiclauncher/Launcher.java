@@ -41,9 +41,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 /**
- * 
+ *
  * @author Maxim Roncacé
- * 
+ *
  * @License
  * THIS SOFTWARE IS LICENSED UNDER THE GNU GENERAL PUBLIC LICENSE VERSION 3, AND AS SUCH,
  * ALL DERIVATIVES MUST BE RELEASED UNDER THE SAME LICENSE. THE FULL LICENSE TEXT MAY BE
@@ -77,7 +77,7 @@ public class Launcher extends JPanel implements ActionListener {
 
 	public static JFrame f;
 
-	protected JButton play, force, quit, updateYes, updateNo;
+	protected JButton play, force, noUpdate, quit, updateYes, updateNo;
 
 	// maps OS string to library extension (e.g. .dll, .so, whatever ridiculous string it is for Mac)
 	public static HashMap<String, String> osExt = new HashMap<String, String>();
@@ -87,7 +87,8 @@ public class Launcher extends JPanel implements ActionListener {
 	private static int width = 800; // width of the window
 	private static int height = 500; // height of the window
 	private boolean update = false; // whether or not the user chose to update
-	boolean updateAvailable = false; // self-explanatory
+	private boolean updateAvailable = false; // self-explanatory
+	private boolean allowReacquire = true;
 	public static String progress = null; // current status message
 	public static String fail = null; // message displayed when an error occurs
 	public static double eSize = -1; // expected size of current file
@@ -114,7 +115,7 @@ public class Launcher extends JPanel implements ActionListener {
 			play.setActionCommand("play");
 			play.addActionListener(this);
 			play.setPreferredSize(new Dimension(btnWidth, btnHeight));
-			play.setBounds((width / 2) - (btnWidth / 2), 150, btnWidth, btnHeight);
+			play.setBounds((width / 2) - (btnWidth / 2), 125, btnWidth, btnHeight);
 			this.add(play);
 
 			force = new JButton("Force Update");
@@ -124,8 +125,18 @@ public class Launcher extends JPanel implements ActionListener {
 			force.setActionCommand("force");
 			force.addActionListener(this);
 			force.setPreferredSize(new Dimension(btnWidth, btnHeight));
-			force.setBounds((width / 2) - (btnWidth / 2), 225, btnWidth, btnHeight);
+			force.setBounds((width / 2) - (btnWidth / 2), 200, btnWidth, btnHeight);
 			this.add(force);
+
+			noUpdate = new JButton("Do Not Reacquire");
+			noUpdate.setVerticalTextPosition(AbstractButton.CENTER);
+			noUpdate.setHorizontalTextPosition(AbstractButton.CENTER);
+			noUpdate.setMnemonic(KeyEvent.VK_ENTER);
+			noUpdate.setActionCommand("noReacquire");
+			noUpdate.addActionListener(this);
+			noUpdate.setPreferredSize(new Dimension(btnWidth, btnHeight));
+			noUpdate.setBounds((width / 2) - (btnWidth / 2), 275, btnWidth, btnHeight);
+			this.add(noUpdate);
 
 			quit = new JButton("Exit Launcher");
 			quit.setVerticalTextPosition(AbstractButton.CENTER);
@@ -134,7 +145,7 @@ public class Launcher extends JPanel implements ActionListener {
 			quit.setActionCommand("quit");
 			quit.addActionListener(this);
 			quit.setPreferredSize(new Dimension(btnWidth, btnHeight));
-			quit.setBounds((width / 2) - (btnWidth / 2), 300, btnWidth, btnHeight);
+			quit.setBounds((width / 2) - (btnWidth / 2), 350, btnWidth, btnHeight);
 			this.add(quit);
 		}
 		launcher = this;
@@ -145,6 +156,7 @@ public class Launcher extends JPanel implements ActionListener {
 			// clear dem buttons
 			this.remove(play);
 			this.remove(force);
+			this.remove(noUpdate);
 			this.remove(quit);
 			File dir = new File(appData(), FOLDER_NAME + File.separator + "resources");
 			if (!downloadDir.isEmpty()) // -d flag was used
@@ -153,7 +165,7 @@ public class Launcher extends JPanel implements ActionListener {
 			try {
 				progress = "Downloading JSON file list...";
 				paintImmediately(0, 0, width, height);
-				Downloader jsonDl = new Downloader(new URL(JSON_LOCATION), dir.getPath() + File.separator + "resources.json", "JSON file list");
+				Downloader jsonDl = new Downloader(new URL(JSON_LOCATION), dir.getPath() + File.separator + "resources.json", "JSON file list", true);
 				Thread jsonT = new Thread(jsonDl); // download in a separate thread so the GUI will continue to update
 				jsonT.start();
 				while (jsonT.isAlive()){} // no need for a progress bar; it's tiny
@@ -169,11 +181,14 @@ public class Launcher extends JPanel implements ActionListener {
 					File file = new File(dir, ((String)jFile.get("localPath")).replace("/", File.separator));
 					boolean reacquire = false;
 					if (!file.exists() || // files doesn't exist
-							update || // update forced
-							!jFile.get("md5").equals(md5(file.getPath()))){ // mismatch between local and remote file
+							(allowReacquire && // allow files to be reacquired
+									(update || // update forced
+											!jFile.get("md5").equals(md5(file.getPath()))))){ // mismatch between local and remote file
 						reacquire = true;
 						if (update)
 							System.out.println("Update forced, so file " + (String)jFile.get("localPath") + " must be updated");
+						else if (!file.exists())
+							System.out.println("Cannot find local copy of file " + (String)jFile.get("localPath"));
 						else
 							System.out.println("MD5 checksum for file " + (String)jFile.get("localPath") + " does not match expected value");
 						System.out.println("Attempting to reacquire...");
@@ -184,7 +199,7 @@ public class Launcher extends JPanel implements ActionListener {
 						paintImmediately(0, 0, width, height);
 						Downloader dl = new Downloader(new URL((String)jFile.get("location")),
 								dir + File.separator + ((String)jFile.get("localPath")).replace("/", File.separator),
-								(String)jFile.get("id"));
+								(String)jFile.get("id"), !jFile.containsKey("doNotSpoofUserAgent") || !Boolean.parseBoolean((String)jFile.get("doNotSpoofUserAgent")));
 						Thread th = new Thread(dl);
 						th.start();
 						eSize = getFileSize(new URL((String)jFile.get("location"))) / 8; // expected file size
@@ -194,8 +209,8 @@ public class Launcher extends JPanel implements ActionListener {
 							aSize = file.length() / 8;
 							if (lastTime != -1){
 								if (System.currentTimeMillis() - lastTime >= SPEED_UPDATE_INTERVAL){ // wait so the GUI isn't constantly updating
-									speed = ((aSize - lastSize) / 1000) /
-											((System.currentTimeMillis() - lastTime) / 1000); // calculate the new download speed
+									speed = (aSize - lastSize) /
+											((System.currentTimeMillis() - lastTime) / 1000) * 8; // calculate the new download speed
 									lastTime = System.currentTimeMillis();
 									lastSize = aSize; // update the downloaded file's size
 								}
@@ -217,7 +232,7 @@ public class Launcher extends JPanel implements ActionListener {
 							File f = new File(dir, ((String)((JSONObject)ex).get("localPath")).replace("/", File.separator));;
 							if (!f.exists() || // file doesn't exist
 									(!f.isDirectory() && ((JSONObject)ex).get("md5") != null && // file isn't directory and has checksum
-									!md5(f.getPath()).equals(((String)((JSONObject)ex).get("md5"))))) // mismatch between local and remote file
+											!md5(f.getPath()).equals(((String)((JSONObject)ex).get("md5"))))) // mismatch between local and remote file
 								reacquire = true;
 							if (((JSONObject)ex).get("id").equals("natives")) // specific to LWJGL launching
 								natives = new File(dir, ((String)((JSONObject)ex).get("localPath")).replace("/", File.separator));
@@ -242,9 +257,9 @@ public class Launcher extends JPanel implements ActionListener {
 											}
 									if (extract){
 										progress = "Extracting " + (elements.containsKey(entry.getName()) ?
-												elements.get(entry.getName()).get("id") :
-													entry.getName().substring(entry.getName().indexOf(parentDir),
-															entry.getName().length()).replace("/", File.separator)); // update the GUI
+																	elements.get(entry.getName()).get("id") :
+																	entry.getName().substring(entry.getName().indexOf(parentDir),
+																			entry.getName().length()).replace("/", File.separator)); // update the GUI
 										paintImmediately(0, 0, width, height);
 										if (entry.isDirectory()){
 											if (parentDir.equals(""))
@@ -252,10 +267,10 @@ public class Launcher extends JPanel implements ActionListener {
 										}
 										else {
 											File path = new File(dir, (parentDir.equals("")) ?
-													((String)elements.get(entry.getName()).get("localPath")).replace("/", File.separator) :
-														entry.getName().substring(entry.getName().indexOf(parentDir),
-																entry.getName().length()).replace("/", File.separator)
-													); // path to extract to
+																	  ((String)elements.get(entry.getName()).get("localPath")).replace("/", File.separator) :
+																	  entry.getName().substring(entry.getName().indexOf(parentDir),
+																			  entry.getName().length()).replace("/", File.separator)
+											); // path to extract to
 											if (path.exists())
 												path.delete();
 											unzip(zip, entry, path); // *zziiiip*
@@ -287,9 +302,32 @@ public class Launcher extends JPanel implements ActionListener {
 			launch();
 		}
 		else if (e.getActionCommand().equals("force")){
-			force.setEnabled(false);
+			force.setActionCommand("noForce");
 			force.setText("Will Force!");
 			update = true;
+			// reset do not reacquire button
+			noUpdate.setActionCommand("noReacquire");
+			noUpdate.setText("Do Not Reacquire");
+			allowReacquire = true;
+		}
+		else if (e.getActionCommand().equals("noForce")){
+			force.setActionCommand("force");
+			force.setText("Force Update");
+			update = false;
+		}
+		else if (e.getActionCommand().equals("noReacquire")){
+			noUpdate.setActionCommand("yesReacquire");
+			noUpdate.setText("Will Not Reacquire!");
+			allowReacquire = false;
+			// reset force update button
+			force.setActionCommand("force");
+			force.setText("Force Update");
+			update = false;
+		}
+		else if (e.getActionCommand().equals("yesReacquire")){
+			noUpdate.setActionCommand("noReacquire");
+			noUpdate.setText("Do Not Reacquire");
+			allowReacquire = true;
 		}
 		else if (e.getActionCommand().equals("quit")){
 			pullThePlug();
@@ -373,11 +411,14 @@ public class Launcher extends JPanel implements ActionListener {
 				g.drawString(fail, centerText(g, fail), height / 2 + 50);
 			else {
 				if (aSize != -1 && eSize != -1){
-					String s = (int)((double)aSize * 8 / 1024) + "/" + (int)((double)eSize * 8 / 1024) + " kb";
+					String s = (int)((double)aSize * 8 / 1024) + "/" + (int)((double)eSize * 8 / 1024) + " KiB";
 					g.drawString(s, centerText(g, s), height / 2 + 40);
-					String sp = "@" + (int)speed + " kiB/s";
-					if (speed >= 1000)
-						sp = "@" + String.format("%.2f", (speed / 1024)) + " Mbps";
+					String sp = "@" + (int)speed + " B/s";
+					if (speed >= 1024)
+						if (speed >= 1024 * 1024)
+							sp = "@" + String.format("%.2f", (speed / 1024 / 1024)) + " MiB/s";
+						else
+							sp = "@" + String.format("%.2f", (speed / 1024)) + " KiB/s";
 					g.drawString(sp, centerText(g, sp), height / 2 + 80);
 					int barWidth = 500;
 					int barHeight = 35;
@@ -406,7 +447,7 @@ public class Launcher extends JPanel implements ActionListener {
 		Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(wev);
 		f.setVisible(false);
 		f.dispose();
-		System.exit(0); 
+		System.exit(0);
 	}
 
 	private static String appData(){
@@ -416,7 +457,7 @@ public class Launcher extends JPanel implements ActionListener {
 		else if (OS.contains("MAC"))
 			return System.getProperty("user.home") + "/.Library/Application Support"; // I think this is where it should go
 		else
-			return System.getProperty("user.home") + "/.minecraft"; // apparently this pisses some people off, but oh well :P
+			return System.getProperty("user.home"); // apparently this pisses some people off, but oh well :P
 	}
 
 	public static void unzip(ZipFile zip, ZipEntry entry, File dest){ // convenience method for unzipping files from an archive
@@ -467,7 +508,7 @@ public class Launcher extends JPanel implements ActionListener {
 			InputStream errStream = p.getErrorStream(); // read error stream so errors can be reported and logged
 			BufferedInputStream in = new BufferedInputStream(p.getInputStream());
 			byte[] bytes = new byte[4096];
-			while (in.read(bytes) != -1){} // this is a horrible idea. never do this.
+			while (in.read(bytes) != -1){} // this is a horrible idea, never do this.
 			String errors = convertStreamToString(errStream, true);
 			if (errors.isEmpty())
 				pullThePlug();
@@ -681,7 +722,6 @@ public class Launcher extends JPanel implements ActionListener {
 	}
 
 	public static void checkFile(File dir, File file, List<String> allowed){
-		System.out.println(file.getPath().replace(dir.getPath() + File.separator, ""));
 		if (file.isDirectory()){
 			if (!allowed.contains(file.getPath().replace(dir.getPath() + File.separator, "")))
 				for (File f : file.listFiles())

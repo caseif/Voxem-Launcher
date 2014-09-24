@@ -4,7 +4,7 @@
 	<groupId>com.headswilllol.basiclauncher</groupId>
 	<artifactId>BasicLauncher</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<name>BasicLauncher</name>
 	<description>A basic JFrame-based launcher and updater for programs requiring libraries.</description>
 	<ciManagement>
@@ -24,7 +24,6 @@
 				<configuration>
 					<source>1.6</source>
 					<target>1.6</target>
-					<complianceLevel>1.6</complianceLevel>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
