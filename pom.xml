@@ -4,7 +4,7 @@
 	<groupId>com.headswilllol.basiclauncher</groupId>
 	<artifactId>BasicLauncher</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.3</version>
+	<version>1.1.0</version>
 	<name>BasicLauncher</name>
 	<description>A basic JFrame-based launcher and updater for programs requiring libraries.</description>
 	<ciManagement>
@@ -14,6 +14,14 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>com.googlecode.json-simple</groupId>
+			<artifactId>json-simple</artifactId>
+			<version>1.1.1</version>
+			<scope>compile</scope>
+		</dependency>
+	</dependencies>
 	<build>
 		<defaultGoal>clean package</defaultGoal>
 		<plugins>
@@ -26,6 +34,19 @@
 					<target>1.6</target>
 					<encoding>UTF-8</encoding>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>1.4</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -70,7 +91,7 @@
 				<filtering>true</filtering>
 				<directory>${basedir}/src/main/resources</directory>
 				<includes>
-					<include>webscripts/*.php</include>
+					<include>example.webscripts/*.php</include>
 					<include>example.json</include>
 				</includes>
 			</resource>

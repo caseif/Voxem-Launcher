@@ -24,13 +24,16 @@ public class Downloader implements Runnable {
 		this.url = url;
 		this.fileName = fileName;
 		this.name = name;
+		this.spoof = spoof;
 	}
 
 	public void run(){
 		try {
 			URLConnection conn = url.openConnection();
-			if (!url.toString().toLowerCase().contains("sourceforge") && !spoof) // SourceForge will serve a download page if we spoof the user agent
-				conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+			// SourceForge will serve a download page if we spoof the user agent
+			if (!url.toString().toLowerCase().contains("sourceforge") && !spoof)
+				conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 " +
+						"(KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
 			conn.connect();
 			ReadableByteChannel rbc = Channels.newChannel(conn.getInputStream());
 			File file = new File(fileName);
