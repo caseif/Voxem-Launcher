@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.headswilllol.basiclauncher</groupId>
+	<groupId>net.caseif.basiclauncher</groupId>
 	<artifactId>BasicLauncher</artifactId>
 	<packaging>jar</packaging>
 	<version>1.1.0</version>
@@ -9,7 +9,7 @@
 	<description>A basic JFrame-based launcher and updater for programs requiring libraries.</description>
 	<ciManagement>
 		<system>jenkins</system>
-		<url>http://ci.amigocraft.net/</url>
+		<url>http://ci.caseif.net/</url>
 	</ciManagement>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -53,12 +53,12 @@
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>2.3.2</version>
 				<configuration>
-					<finalName>MineFlat Launcher</finalName>
+					<finalName>Voxem Launcher</finalName>
 					<archive>
 						<compress>true</compress>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>com.headswilllol.basiclauncher.Launcher</mainClass>
+							<mainClass>net.caseif.basiclauncher.Launcher</mainClass>
 						</manifest>
 						<manifestEntries>
 							<Built-By>Jenkins</Built-By>
