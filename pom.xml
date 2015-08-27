@@ -45,6 +45,13 @@
 						<goals>
 							<goal>shade</goal>
 						</goals>
+                        <configuration>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>junit:junit</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
 					</execution>
 				</executions>
 			</plugin>
